@@ -4,14 +4,14 @@ const nextConfig: NextConfig = {
   // Use proper Next.js 15 configuration
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000", "mindsync.netlify.app"],
+      allowedOrigins: ["localhost:3000", "mindsync.vercel.app"],
     },
     // Enable turbo for faster builds
     turbo: {},
   },
-  // Output standalone build for better Netlify compatibility
+  // Standalone output for better performance
   output: "standalone",
-  // Configure images for Netlify
+  // Configure images
   images: {
     domains: ["lh3.googleusercontent.com"], // For Google profile images
     // Only disable optimization in development
