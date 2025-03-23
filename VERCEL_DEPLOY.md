@@ -59,6 +59,12 @@ Before deploying, ensure all PWA icons are properly added to the `public/icons` 
 
 ## Troubleshooting
 
+### Dependency Conflicts
+If encountering dependency conflicts during deployment:
+- React version has been downgraded to 18.2.0 from 19.0.0 to resolve conflicts with cmdk
+- The `--legacy-peer-deps` flag is added to both vercel.json and the build script
+- If other dependency conflicts occur, check the Vercel build logs and update package.json accordingly
+
 ### CORS Issues
 If experiencing CORS issues, check:
 - Allowed origins in next.config.ts 
