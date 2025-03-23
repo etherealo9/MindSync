@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Theme 2: Light - Clean & Simple (#FFFFFF) - Minimalistic, airy & organized */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 20% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 20%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 220 20% 20%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 220 20% 40%;
+    --accent: 210 20% 96%;
+    --accent-foreground: 220 20% 20%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 210 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  /* Theme 1: Dark - Matte Black (#000000) - Developer-friendly, focused & modern */
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 90%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 60 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 60 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 60 100% 50%;
+  }
+
+  /* Theme 3: Royal - Luxurious (#4B0082) - Opulent, elegant & commanding */
+  .royal {
+    --background: 275 100% 98%;
+    --foreground: 275 100% 25%;
+    --card: 275 100% 100%;
+    --card-foreground: 275 100% 25%;
+    --popover: 275 100% 100%;
+    --popover-foreground: 275 100% 25%;
+    --primary: 275 100% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 275 30% 90%;
+    --secondary-foreground: 275 100% 25%;
+    --muted: 275 30% 94%;
+    --muted-foreground: 275 30% 40%;
+    --accent: 300 80% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 275 70% 75%;
+    --input: 275 30% 90%;
+    --ring: 275 100% 25%;
+  }
+
+  .royal.dark {
+    --background: 275 100% 5%;
+    --foreground: 275 100% 90%;
+    --card: 275 100% 8%;
+    --card-foreground: 275 100% 90%;
+    --popover: 275 100% 8%;
+    --popover-foreground: 275 100% 90%;
+    --primary: 275 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 275 70% 15%;
+    --secondary-foreground: 275 100% 90%;
+    --muted: 275 50% 15%;
+    --muted-foreground: 275 30% 70%;
+    --accent: 300 80% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 275 80% 30%;
+    --input: 275 70% 15%;
+    --ring: 275 100% 60%;
+  }
+
+  /* Theme 4: Natural - Pastel Watercolor (#A8E6CF) - Organic, calming & creative */
+  .natural {
+    --background: 157 56% 97%;
+    --foreground: 157 56% 25%;
+    --card: 157 56% 100%;
+    --card-foreground: 157 56% 25%;
+    --popover: 157 56% 100%;
+    --popover-foreground: 157 56% 25%;
+    --primary: 157 56% 70%;
+    --primary-foreground: 157 56% 25%;
+    --secondary: 157 30% 90%;
+    --secondary-foreground: 157 56% 25%;
+    --muted: 157 30% 94%;
+    --muted-foreground: 157 20% 40%;
+    --accent: 120 40% 80%;
+    --accent-foreground: 157 56% 25%;
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 157 30% 80%;
+    --input: 157 20% 90%;
+    --ring: 157 56% 70%;
+  }
+
+  .natural.dark {
+    --background: 157 30% 10%;
+    --foreground: 157 30% 90%;
+    --card: 157 30% 13%;
+    --card-foreground: 157 30% 90%;
+    --popover: 157 30% 13%;
+    --popover-foreground: 157 30% 90%;
+    --primary: 157 56% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 157 20% 20%;
+    --secondary-foreground: 157 30% 90%;
+    --muted: 157 15% 20%;
+    --muted-foreground: 157 10% 70%;
+    --accent: 120 40% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 157 20% 30%;
+    --input: 157 20% 20%;
+    --ring: 157 56% 60%;
+  }
+
+  /* Theme 5: Buzz - Neon Funky (#39FF14) - Energetic, playful & vibrant */
+  .buzz {
+    --background: 0 0% 10%;
+    --foreground: 110 100% 70%;
+    --card: 0 0% 15%;
+    --card-foreground: 110 100% 70%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 110 100% 70%;
+    --primary: 110 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 300 100% 50%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 110 100% 60%;
+    --accent: 330 100% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 110 100% 40%;
+    --input: 0 0% 25%;
+    --ring: 110 100% 50%;
+  }
+
+  .buzz.dark {
+    --background: 0 0% 5%;
+    --foreground: 110 100% 70%;
+    --card: 0 0% 8%;
+    --card-foreground: 110 100% 70%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 110 100% 70%;
+    --primary: 110 100% 60%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 300 100% 60%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 110 80% 60%;
+    --accent: 200 100% 60%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 110 100% 50%;
+    --input: 0 0% 20%;
+    --ring: 330 100% 50%;
+  }
+} 
