@@ -14,8 +14,8 @@ In the Vercel dashboard, add these environment variables:
 - `OPENAI_API_KEY`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_REDIRECT_URI` (set to https://mindsync.vercel.app/auth/google/callback)
-- `NEXT_PUBLIC_PRODUCTION_URL` (set to https://mindsync.vercel.app)
+- `GOOGLE_REDIRECT_URI` (set to https://mindsync-ao.vercel.app/auth/google/callback)
+- `NEXT_PUBLIC_PRODUCTION_URL` (set to https://mindsync-ao.vercel.app)
 
 ### 2. PWA Icons Setup
 Before deploying, ensure all PWA icons are properly added to the `public/icons` directory:
@@ -31,9 +31,9 @@ Before deploying, ensure all PWA icons are properly added to the `public/icons` 
 ### 3. Google OAuth Configuration
 1. Go to Google Cloud Console
 2. Update the authorized redirect URI to your Vercel domain: 
-   - https://mindsync.vercel.app/auth/google/callback
+   - https://mindsync-ao.vercel.app/auth/google/callback
 3. Add your production domain to authorized JavaScript origins:
-   - https://mindsync.vercel.app
+   - https://mindsync-ao.vercel.app
 
 ### 4. Deployment Process
 1. Connect your Git repository to Vercel

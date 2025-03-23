@@ -27,10 +27,10 @@ async function getCalendarService(userId: string) {
 // GET endpoint to retrieve a specific event
 export async function GET(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: { eventId: string } }
 ) {
   try {
-    const { eventId } = params;
+    const { eventId } = context.params;
 
     // Get authenticated user
     const user = await getAuthenticatedUser();
@@ -69,10 +69,10 @@ export async function GET(
 // PATCH endpoint to update a specific event
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: { eventId: string } }
 ) {
   try {
-    const { eventId } = params;
+    const { eventId } = context.params;
 
     // Get authenticated user
     const user = await getAuthenticatedUser();
@@ -114,10 +114,10 @@ export async function PATCH(
 // DELETE endpoint to remove a specific event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: { eventId: string } }
 ) {
   try {
-    const { eventId } = params;
+    const { eventId } = context.params;
 
     // Get authenticated user
     const user = await getAuthenticatedUser();
