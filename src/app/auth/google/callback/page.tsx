@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Icons } from '@/components/ui/icons'
 
-export default function GoogleAuthCallback() {
+// Client component that uses searchParams
+function GoogleCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -105,5 +106,26 @@ export default function GoogleAuthCallback() {
         )}
       </div>
     </div>
+  )
+}
+
+// Main page component with Suspense boundary
+export default function GoogleAuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6 rounded-lg border-2 border-black dark:border-white p-6 shadow-lg">
+          <h1 className="text-2xl font-bold tracking-tighter uppercase text-center">
+            Google Calendar Authentication
+          </h1>
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <Icons.spinner className="h-8 w-8 animate-spin" />
+            <p className="text-center">Loading authentication page...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <GoogleCallbackContent />
+    </Suspense>
   )
 } 
