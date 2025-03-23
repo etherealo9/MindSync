@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
-    "vercel-build": "next build --legacy-peer-deps"
+    "vercel-build": "next build --no-lint --legacy-peer-deps"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

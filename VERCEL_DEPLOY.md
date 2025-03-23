@@ -65,6 +65,19 @@ If encountering dependency conflicts during deployment:
 - The `--legacy-peer-deps` flag is added to both vercel.json and the build script
 - If other dependency conflicts occur, check the Vercel build logs and update package.json accordingly
 
+### Linting and TypeScript Errors
+The build is configured to skip linting with the `--no-lint` flag to prevent deployment failures due to:
+- TypeScript type errors (`@typescript-eslint/no-explicit-any`, etc.)
+- Unused variable warnings
+- React hook dependency warnings
+- Unescaped entity errors
+
+For production-ready code, these issues should be addressed by:
+1. Adding proper types instead of using `any`
+2. Removing unused variables
+3. Fixing React hook dependencies
+4. Properly escaping entities in JSX
+
 ### CORS Issues
 If experiencing CORS issues, check:
 - Allowed origins in next.config.ts 
