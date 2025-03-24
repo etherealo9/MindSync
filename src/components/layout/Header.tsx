@@ -16,7 +16,7 @@ export function Header() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-[150] w-full border-b bg-background/95 backdrop-blur-lg">
+    <header className="fixed top-0 z-[150] w-full border-b bg-background/95 backdrop-blur-lg">
       <div className="flex h-14 items-center px-4 md:px-6 lg:px-8">
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">

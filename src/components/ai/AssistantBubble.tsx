@@ -400,14 +400,15 @@ export default function AssistantBubble() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
+    <div className="fixed bottom-20 right-4 z-[9999] lg:bottom-8">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button 
-            className="rounded-full w-14 h-14 shadow-lg flex items-center justify-center p-0"
-            onClick={() => setIsOpen(true)}
+          <Button
+            variant="default"
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-lg"
           >
-            <Icons.bot size={24} />
+            <Icons.bot className="h-6 w-6" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-0" align="end" sideOffset={16}>

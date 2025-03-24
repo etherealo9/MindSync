@@ -49,11 +49,11 @@ const bottomNavItems = [
   },
 ];
 
-export function BottomNav({ className }: { className?: string }) {
+export function BottomNav() {
   const pathname = usePathname();
-
+  
   return (
-    <nav className={cn("fixed bottom-0 left-0 right-0 z-[100] h-16 bg-background/95 backdrop-blur-lg border-t lg:hidden", className)}>
+    <nav className="fixed bottom-0 left-0 right-0 w-full h-16 bg-background/95 backdrop-blur-lg border-t shadow-md z-[9999] lg:hidden">
       <div className="grid h-full grid-cols-5 mx-auto max-w-md">
         {bottomNavItems.map((item) => (
           <Link

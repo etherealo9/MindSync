@@ -7,7 +7,6 @@ import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/lib/supabase/auth-context";
-import { DebugAuth } from "@/components/debug-auth";
 import { NotificationProvider } from "@/lib/notifications/notification-context";
 import AssistantBubble from "@/components/ai/AssistantBubble";
 
@@ -52,20 +51,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <NotificationProvider>
-      <div className="flex min-h-screen flex-col lg:flex-row bg-background">
+      <div className="flex min-h-screen flex-col">
         <Sidebar />
-        <div className="flex-1 flex flex-col lg:ml-[300px]">
-          <Header />
-          <main className="flex-1 overflow-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-24 lg:pb-8">
-            <div className="mx-auto max-w-6xl w-full">
-              {children}
-            </div>
-          </main>
-          <BottomNav />
-        </div>
-        <Toaster />
-        <AssistantBubble />
+        <Header />
+        <main className="flex-1 pb-20 lg:pb-8 lg:pl-[300px] pt-14">
+          <div className="container mx-auto p-4 md:p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
       </div>
+      <BottomNav />
+      <Toaster />
+      <AssistantBubble />
     </NotificationProvider>
   );
 } 
