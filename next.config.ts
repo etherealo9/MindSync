@@ -18,11 +18,10 @@ const pwaConfig = {
 const nextConfig: NextConfig = {
   // Use proper Next.js 15 configuration
   experimental: {
+    // Enable server actions with allowed origins
     serverActions: {
       allowedOrigins: ["localhost:3000", "mindsync-ao.vercel.app"],
     },
-    // Enable turbo for faster builds
-    turbo: {},
   },
   // Standalone output for better performance
   output: "standalone",
