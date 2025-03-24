@@ -30,7 +30,7 @@ export default function GetInvolvedSection() {
                 Help us make productivity and personal growth accessible to everyone.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 pt-6 animate-fade-in" style={{ animationDelay: "300ms" }}>
-                <Link href="https://github.com">
+                <Link href="https://github.com/etherealo9/MindSync">
                   <Button size="lg" className="neo-button w-full sm:w-auto px-6 py-6 text-lg">
                     <Icons.github className="mr-3 h-5 w-5" />
                     Star on GitHub
@@ -129,7 +129,7 @@ export default function GetInvolvedSection() {
                   <Icons.arrowRight className="ml-3 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="https://github.com" className="w-full sm:w-auto">
+              <Link href="https://github.com/etherealo9/MindSync" className="w-full sm:w-auto">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto px-8 py-6 text-lg bg-white/80 backdrop-blur-sm text-black border-2 border-black hover:bg-white transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)]">
                   <Icons.github className="mr-3 h-5 w-5" />
                   View on GitHub

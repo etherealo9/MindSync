@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/supabase/auth-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScriptOptimization } from "@/components/script-optimization";
 import { PerformanceMonitor } from "@/components/performance-monitor";
+import { ClientProviders } from "@/components/client-providers";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -20,9 +21,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" }
+    { media: "(prefers-color-scheme: light)", color: "#3b82f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#3b82f6" }
   ],
+  maximumScale: 1.5,
 };
 
 export const metadata: Metadata = {
@@ -49,19 +51,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
-      <body className={`${spaceGrotesk.variable} font-space-grotesk antialiased`}>
+      <head>
+        <ScriptOptimization />
+      </head>
+      <body className={spaceGrotesk.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <Toaster position="bottom-right" />
-            <ScriptOptimization />
-            <PerformanceMonitor />
+            <ClientProviders>
+              <PerformanceMonitor />
+              <Toaster />
+              {children}
+            </ClientProviders>
           </AuthProvider>
         </ThemeProvider>
       </body>

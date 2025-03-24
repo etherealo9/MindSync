@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { DebugAuth } from "@/components/debug-auth";
 import { NotificationProvider } from "@/lib/notifications/notification-context";
+import AssistantBubble from "@/components/ai/AssistantBubble";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -63,6 +64,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <BottomNav />
         </div>
         <Toaster />
+        <AssistantBubble />
       </div>
     </NotificationProvider>
   );

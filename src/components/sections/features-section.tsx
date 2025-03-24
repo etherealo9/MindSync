@@ -27,8 +27,55 @@ export default function FeaturesSection() {
         </div>
         
         <div className="mx-auto grid gap-6 md:gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Task Management */}
+          {/* Featured Items - Moving these to the top */}
+          
+          {/* Data Ownership */}
           <div className="group" data-aos="fade-up">
+            <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full bg-accent/10">
+              <CardContent className="p-8 flex flex-col items-center text-center h-full">
+                <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
+                  <Icons.profile className="h-8 w-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 uppercase">Data Ownership</h3>
+                <p className="text-foreground/70 text-lg">
+                  You own your personal data. Just provide your Supabase and AI API keys - all your data stays yours.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Easy Deployment */}
+          <div className="group" data-aos="fade-up" data-aos-delay="100">
+            <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full bg-accent/10">
+              <CardContent className="p-8 flex flex-col items-center text-center h-full">
+                <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
+                  <Icons.zap className="h-8 w-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 uppercase">Easy Deployment</h3>
+                <p className="text-foreground/70 text-lg">
+                  One-click deployment to Netlify, Vercel, or Docker - choose what works best for you.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Open Source */}
+          <div className="group" data-aos="fade-up" data-aos-delay="200">
+            <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full bg-accent/10">
+              <CardContent className="p-8 flex flex-col items-center text-center h-full">
+                <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
+                  <Icons.github className="h-8 w-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 uppercase">Open Source</h3>
+                <p className="text-foreground/70 text-lg">
+                  Fully open source with unlimited customization possibilities and community-driven development.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Task Management */}
+          <div className="group" data-aos="fade-up" data-aos-delay="300">
             <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full">
               <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
@@ -43,7 +90,7 @@ export default function FeaturesSection() {
           </div>
           
           {/* Journaling */}
-          <div className="group" data-aos="fade-up" data-aos-delay="100">
+          <div className="group" data-aos="fade-up" data-aos-delay="400">
             <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full">
               <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
@@ -58,7 +105,7 @@ export default function FeaturesSection() {
           </div>
           
           {/* Reflection */}
-          <div className="group" data-aos="fade-up" data-aos-delay="200">
+          <div className="group" data-aos="fade-up" data-aos-delay="500">
             <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full">
               <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
@@ -73,7 +120,7 @@ export default function FeaturesSection() {
           </div>
           
           {/* AI Assistant */}
-          <div className="group" data-aos="fade-up" data-aos-delay="300">
+          <div className="group" data-aos="fade-up" data-aos-delay="600">
             <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full">
               <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
@@ -81,14 +128,14 @@ export default function FeaturesSection() {
                 </div>
                 <h3 className="text-2xl font-bold mb-3 uppercase">AI Assistant</h3>
                 <p className="text-foreground/70 text-lg">
-                  Get help with productivity tips, journaling prompts, and task organization.
+                  Get help with productivity tips, journaling prompts, and task organization using OpenAI or Hugging Face.
                 </p>
               </CardContent>
             </Card>
           </div>
           
           {/* Calendar Integration */}
-          <div className="group" data-aos="fade-up" data-aos-delay="400">
+          <div className="group" data-aos="fade-up" data-aos-delay="700">
             <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full">
               <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">
@@ -103,7 +150,7 @@ export default function FeaturesSection() {
           </div>
           
           {/* Analytics */}
-          <div className="group" data-aos="fade-up" data-aos-delay="500">
+          <div className="group" data-aos="fade-up" data-aos-delay="800">
             <Card className="border-2 border-black dark:border-white overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)] h-full">
               <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent mb-6 transition-transform duration-300 group-hover:scale-110">

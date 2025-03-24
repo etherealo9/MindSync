@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,78 +29,64 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 import { AreaChartComponent, PieChartComponent, BarChartComponent } from "@/components/charts";
+import { Task, TasksAPI } from "@/lib/supabase/database";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { toast } from "sonner";
+import AssistantHelper from "@/components/ai/AssistantHelper";
 
-// Task type definition
-type Task = {
-  id: string;
-  title: string;
-  completed: boolean;
-  dueDate: string;
-  dueTime?: string;
-  priority: "low" | "medium" | "high";
-  reminder?: boolean;
-  attachments?: string[];
-  status: "todo" | "in-progress" | "done";
+// Helper type for task completion data
+type TaskCompletionData = {
+  name: string;
+  done: number;
+  total: number;
 };
 
 export default function TasksPage() {
-  // State for selected view
+  const { user } = useAuth();
   const [view, setView] = useState<"list" | "kanban">("list");
-  
-  // Sample tasks data
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Complete project proposal",
-      completed: false,
-      dueDate: "2025-03-23",
-      priority: "high",
-      status: "todo",
-    },
-    {
-      id: "2",
-      title: "Research market trends",
-      completed: false,
-      dueDate: "2025-03-24",
-      priority: "medium",
-      status: "in-progress",
-    },
-    {
-      id: "3",
-      title: "Team meeting prep",
-      completed: false,
-      dueDate: "2025-03-25",
-      priority: "low",
-      status: "todo",
-    },
-    {
-      id: "4",
-      title: "Update documentation",
-      completed: true,
-      dueDate: "2025-03-22",
-      priority: "medium",
-      status: "done",
-    },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showAIHelper, setShowAIHelper] = useState(false);
+
+  // Move the fetchTasks function out of the useEffect so it can be reused
+  const fetchTasks = async () => {
+    if (!user) return;
+    
+    try {
+      const userTasks = await TasksAPI.getTasks(user.id);
+      setTasks(userTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      toast.error("Failed to load tasks");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch tasks on component mount
+  useEffect(() => {
+    fetchTasks();
+  }, [user]);
 
   // New task form state
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskPriority, setNewTaskPriority] = useState<"low" | "medium" | "high">("medium");
+  const [newTaskPriority, setNewTaskPriority] = useState<Task["priority"]>("medium");
   const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>(new Date());
   const [newTaskDueTime, setNewTaskDueTime] = useState("12:00");
   const [newTaskReminder, setNewTaskReminder] = useState(false);
-  const [newTaskStatus, setNewTaskStatus] = useState<"todo" | "in-progress" | "done">("todo");
+  const [newTaskStatus, setNewTaskStatus] = useState<Task["status"]>("todo");
   const [newTaskAttachments, setNewTaskAttachments] = useState<string[]>([]);
 
   // Sample data for task analytics
-  const taskCompletionData = [
-    { name: "Mon", completed: 5, total: 8 },
-    { name: "Tue", completed: 4, total: 6 },
-    { name: "Wed", completed: 7, total: 9 },
-    { name: "Thu", completed: 3, total: 5 },
-    { name: "Fri", completed: 6, total: 8 },
-    { name: "Sat", completed: 2, total: 4 },
-    { name: "Sun", completed: 1, total: 2 },
+  const taskCompletionData: TaskCompletionData[] = [
+    { name: "Mon", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
+    { name: "Tue", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
+    { name: "Wed", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
+    { name: "Thu", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
+    { name: "Fri", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
+    { name: "Sat", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
+    { name: "Sun", done: tasks.filter(t => t.status === "done").length, total: tasks.length },
   ];
 
   const taskPriorityData = [
@@ -111,56 +97,78 @@ export default function TasksPage() {
 
   const taskStatusData = [
     { name: "To Do", value: tasks.filter(t => t.status === "todo").length },
-    { name: "In Progress", value: tasks.filter(t => t.status === "in-progress").length },
+    { name: "In Progress", value: tasks.filter(t => t.status === "in_progress").length },
     { name: "Done", value: tasks.filter(t => t.status === "done").length },
   ];
 
   // Toggle task completion
-  const toggleTaskCompletion = (taskId: string) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId 
-          ? { 
-              ...task, 
-              completed: !task.completed,
-              status: !task.completed ? "done" : task.status 
-            } 
-          : task
-      )
-    );
+  const toggleTaskCompletion = async (taskId: string) => {
+    const taskToUpdate = tasks.find(task => task.id === taskId);
+    if (!taskToUpdate) return;
+    
+    const newStatus = taskToUpdate.status === "done" ? "todo" : "done";
+    
+    try {
+      const updatedTask = await TasksAPI.updateTask(taskId, { status: newStatus });
+      setTasks(tasks.map(task => task.id === taskId ? updatedTask : task));
+      toast.success(`Task marked as ${newStatus === "done" ? "complete" : "incomplete"}`);
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("Failed to update task status");
+    }
   };
 
   // Add new task
-  const addTask = () => {
-    if (newTaskTitle.trim() === "") return;
-    
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: newTaskTitle,
-      completed: false,
-      dueDate: newTaskDueDate ? format(newTaskDueDate, "yyyy-MM-dd") : new Date().toISOString().split("T")[0],
-      dueTime: newTaskDueTime,
-      priority: newTaskPriority,
-      reminder: newTaskReminder,
-      attachments: newTaskAttachments,
-      status: newTaskStatus,
-    };
-    
-    setTasks([...tasks, newTask]);
-    
-    // Reset form fields
-    setNewTaskTitle("");
-    setNewTaskPriority("medium");
-    setNewTaskDueDate(new Date());
-    setNewTaskDueTime("12:00");
-    setNewTaskReminder(false);
-    setNewTaskAttachments([]);
-    setNewTaskStatus("todo");
+  const addTask = async () => {
+    if (!user || !newTaskTitle.trim() || !newTaskDueDate) return;
+
+    try {
+      const newTask = await TasksAPI.createTask({
+        user_id: user.id,
+        title: newTaskTitle,
+        description: "",
+        due_date: new Date(newTaskDueDate.toDateString() + " " + newTaskDueTime).toISOString(),
+        status: newTaskStatus,
+        priority: newTaskPriority,
+      });
+
+      setTasks([newTask, ...tasks]);
+      setNewTaskTitle("");
+      setNewTaskPriority("medium");
+      setNewTaskDueDate(new Date());
+      setNewTaskDueTime("12:00");
+      setNewTaskReminder(false);
+      setNewTaskAttachments([]);
+      setNewTaskStatus("todo");
+      toast.success("Task created successfully");
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast.error("Failed to create task");
+    }
+  };
+
+  // Update task status
+  const updateTaskStatus = async (taskId: string, newStatus: Task["status"]) => {
+    try {
+      const updatedTask = await TasksAPI.updateTask(taskId, { status: newStatus });
+      setTasks(tasks.map(task => task.id === taskId ? updatedTask : task));
+      toast.success("Task status updated");
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("Failed to update task status");
+    }
   };
 
   // Delete task
-  const deleteTask = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId));
+  const deleteTask = async (taskId: string) => {
+    try {
+      await TasksAPI.deleteTask(taskId);
+      setTasks(tasks.filter(task => task.id !== taskId));
+      toast.success("Task deleted successfully");
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("Failed to delete task");
+    }
   };
 
   // Get priority class
@@ -186,15 +194,30 @@ export default function TasksPage() {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent, status: "todo" | "in-progress" | "done") => {
+  const handleDrop = async (e: React.DragEvent, status: Task["status"]) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
+    const taskToUpdate = tasks.find(task => task.id === taskId);
     
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, status: status, completed: status === "done" } : task
-      )
-    );
+    if (!taskToUpdate) return;
+
+    try {
+      // Optimistically update the UI
+      setTasks(tasks.map(task =>
+        task.id === taskId ? { ...task, status } : task
+      ));
+
+      // Update in the database
+      await TasksAPI.updateTask(taskId, { status });
+      toast.success("Task status updated");
+    } catch (error) {
+      // Revert the optimistic update on error
+      setTasks(tasks.map(task =>
+        task.id === taskId ? { ...task, status: taskToUpdate.status } : task
+      ));
+      console.error("Error updating task status:", error);
+      toast.error("Failed to update task status");
+    }
   };
 
   // File upload handler
@@ -204,6 +227,54 @@ export default function TasksPage() {
       setNewTaskAttachments([...newTaskAttachments, ...fileNames]);
     }
   };
+
+  const handleAIResult = async (result: string) => {
+    if (selectedTask) {
+      // Handle modification of existing task
+      try {
+        await TasksAPI.updateTask(selectedTask.id, {
+          ...selectedTask,
+          description: result
+        });
+        
+        // Update the local state
+        fetchTasks(); // Re-fetch tasks or update local state directly
+        
+        toast.success("Task updated with AI suggestion");
+        setShowAIHelper(false);
+      } catch (error) {
+        console.error("Error updating task:", error);
+        toast.error("Failed to update task");
+      }
+    } else {
+      // Handle adding a new task
+      try {
+        await TasksAPI.createTask({
+          user_id: user!.id,
+          title: "AI Generated Task",
+          description: result,
+          priority: "medium",
+          status: "todo",
+          due_date: new Date().toISOString().split('T')[0] // Today
+        });
+        
+        fetchTasks(); // Re-fetch tasks
+        toast.success("New task created with AI");
+        setShowAIHelper(false);
+      } catch (error) {
+        console.error("Error adding task:", error);
+        toast.error("Failed to create new task");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -258,13 +329,13 @@ export default function TasksPage() {
                 
                 <div className="grid gap-2">
                   <Label htmlFor="task-status">Status</Label>
-                  <Select value={newTaskStatus} onValueChange={(v) => setNewTaskStatus(v as "todo" | "in-progress" | "done")}>
+                  <Select value={newTaskStatus} onValueChange={(v) => setNewTaskStatus(v as "todo" | "in_progress" | "done")}>
                     <SelectTrigger id="task-status">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todo">To Do</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
                       <SelectItem value="done">Done</SelectItem>
                     </SelectContent>
                   </Select>
@@ -354,299 +425,145 @@ export default function TasksPage() {
         {/* Tasks Tab Content */}
         <TabsContent value="tasks" className="space-y-6 mt-2">
           {view === "list" && (
-            <div className="space-y-6 sm:space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Today's Tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {tasks
-                      .filter((task) => !task.completed)
-                      .map((task) => (
-                        <div
-                          key={task.id}
-                          className="flex flex-wrap items-center gap-3 border-b pb-4 last:border-0 last:pb-0 overflow-hidden"
+            <div className="space-y-4">
+              {tasks.map((task) => (
+                <Card key={task.id}>
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                    <div>
+                      <CardTitle className={task.status === "done" ? "text-lg line-through text-muted-foreground" : "text-lg"}>
+                        {task.title}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                      </p>
+                    </div>
+                    <div className="flex items-center">
+                      <Checkbox
+                        checked={task.status === "done"}
+                        onCheckedChange={() => toggleTaskCompletion(task.id)}
+                        className="size-5"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteTask(task.id)}
+                        className="size-8"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="size-4"
                         >
-                          <div
-                            className={`w-4 h-4 rounded-full ${getPriorityClass(
-                              task.priority
-                            )}`}
-                          ></div>
-                          <Checkbox
-                            checked={task.completed}
-                            onCheckedChange={() => toggleTaskCompletion(task.id)}
-                            className="size-5"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{task.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
-                              {task.dueTime ? ` at ${task.dueTime}` : ""}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteTask(task.id)}
-                            className="size-8"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="size-4"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
-                          </Button>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Completed Tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {tasks
-                      .filter((task) => task.completed)
-                      .map((task) => (
-                        <div
-                          key={task.id}
-                          className="flex flex-wrap items-center gap-3 border-b pb-4 last:border-0 last:pb-0 overflow-hidden"
-                        >
-                          <div
-                            className={`w-4 h-4 rounded-full ${getPriorityClass(
-                              task.priority
-                            )}`}
-                          ></div>
-                          <Checkbox
-                            checked={task.completed}
-                            onCheckedChange={() => toggleTaskCompletion(task.id)}
-                            className="size-5"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium flex-1 break-words min-w-0 pr-2">{task.title}</p>
-                            
-                            {task.status === "done" ? (
-                              <p className="text-sm font-medium flex-1 break-words min-w-0 pr-2 line-through text-muted-foreground">{task.title}</p>
-                            ) : (
-                              <p className="text-sm font-medium flex-1 break-words min-w-0 pr-2">{task.title}</p>
-                            )}
-
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteTask(task.id)}
-                            className="size-8"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="size-4"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
-                          </Button>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
             </div>
           )}
 
           {view === "kanban" && (
-            <div className="grid grid-cols-1 gap-6 sm:gap-4 lg:grid-cols-3">
-              {/* To Do Column */}
-              <div 
-                className="bg-secondary/50 rounded-lg p-4 min-h-[200px]"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Todo Column */}
+              <div
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, "todo")}
+                className="space-y-3"
               >
                 <h3 className="font-semibold mb-4">To Do</h3>
-                <div className="space-y-3">
+                <div className="space-y-3 min-h-[200px] p-4 rounded-lg border-2 border-dashed">
                   {tasks
                     .filter((task) => task.status === "todo")
                     .map((task) => (
-                      <div
+                      <Card 
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
-                        className="bg-background p-3 rounded-md border cursor-move"
+                        className="cursor-move hover:border-accent transition-colors"
                       >
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <div
-                            className={`w-4 h-4 rounded-full ${getPriorityClass(
-                              task.priority
-                            )}`}
-                          ></div>
-                          <p className="text-sm font-medium flex-1 break-words min-w-0 pr-2">{task.title}</p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                            className="size-6 h-6 flex-shrink-0 ml-auto"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="size-3"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
-                          {task.dueTime ? ` at ${task.dueTime}` : ""}
-                        </p>
-                      </div>
+                        <CardHeader>
+                          <CardTitle className="text-sm">{task.title}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${getPriorityClass(task.priority)}`} />
+                            <p className="text-xs text-muted-foreground">
+                              Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                            </p>
+                          </div>
+                        </CardHeader>
+                      </Card>
                     ))}
                 </div>
               </div>
 
               {/* In Progress Column */}
-              <div 
-                className="bg-secondary/50 rounded-lg p-4 min-h-[200px]"
+              <div
                 onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, "in-progress")}
+                onDrop={(e) => handleDrop(e, "in_progress")}
+                className="space-y-3"
               >
                 <h3 className="font-semibold mb-4">In Progress</h3>
-                <div className="space-y-3">
+                <div className="space-y-3 min-h-[200px] p-4 rounded-lg border-2 border-dashed">
                   {tasks
-                    .filter((task) => task.status === "in-progress")
+                    .filter((task) => task.status === "in_progress")
                     .map((task) => (
-                      <div
+                      <Card 
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
-                        className="bg-background p-3 rounded-md border cursor-move"
+                        className="cursor-move hover:border-accent transition-colors"
                       >
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <div
-                            className={`w-4 h-4 rounded-full ${getPriorityClass(
-                              task.priority
-                            )}`}
-                          ></div>
-                          <p className="text-sm font-medium flex-1 break-words min-w-0 pr-2">{task.title}</p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                            className="size-6 h-6 flex-shrink-0 ml-auto"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="size-3"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
-                          {task.dueTime ? ` at ${task.dueTime}` : ""}
-                        </p>
-                      </div>
+                        <CardHeader>
+                          <CardTitle className="text-sm">{task.title}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${getPriorityClass(task.priority)}`} />
+                            <p className="text-xs text-muted-foreground">
+                              Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                            </p>
+                          </div>
+                        </CardHeader>
+                      </Card>
                     ))}
                 </div>
               </div>
 
               {/* Done Column */}
-              <div 
-                className="bg-secondary/50 rounded-lg p-4 min-h-[200px]"
+              <div
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, "done")}
+                className="space-y-3"
               >
                 <h3 className="font-semibold mb-4">Done</h3>
-                <div className="space-y-3">
+                <div className="space-y-3 min-h-[200px] p-4 rounded-lg border-2 border-dashed">
                   {tasks
                     .filter((task) => task.status === "done")
                     .map((task) => (
-                      <div
+                      <Card 
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
-                        className="bg-background p-3 rounded-md border cursor-move"
+                        className="cursor-move hover:border-accent transition-colors"
                       >
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <div
-                            className={`w-4 h-4 rounded-full ${getPriorityClass(
-                              task.priority
-                            )}`}
-                          ></div>
-                          <p className="text-sm font-medium flex-1 break-words min-w-0 pr-2">{task.title}</p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                            className="size-6 h-6 flex-shrink-0 ml-auto"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="size-3"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
-                          {task.dueTime ? ` at ${task.dueTime}` : ""}
-                        </p>
-                      </div>
+                        <CardHeader>
+                          <CardTitle className="text-sm">{task.title}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${getPriorityClass(task.priority)}`} />
+                            <p className="text-xs text-muted-foreground">
+                              Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                            </p>
+                          </div>
+                        </CardHeader>
+                      </Card>
                     ))}
                 </div>
               </div>
@@ -683,8 +600,8 @@ export default function TasksPage() {
                 <BarChartComponent
                   title=""
                   data={taskCompletionData}
-                  dataKey="completed"
-                  categories={["completed", "total"]}
+                  dataKey="done"
+                  categories={["done", "total"]}
                   variant="brutal"
                   height={200}
                 />
@@ -732,9 +649,9 @@ export default function TasksPage() {
               <div className="p-4 bg-muted rounded-lg">
                 <h4 className="font-medium mb-2">Completion Rate</h4>
                 <p className="text-sm">
-                  Your weekly task completion rate is {Math.round((taskCompletionData.reduce((sum, day) => sum + day.completed, 0) / 
+                  Your weekly task completion rate is {Math.round((taskCompletionData.reduce((sum, day) => sum + day.done, 0) / 
                   taskCompletionData.reduce((sum, day) => sum + day.total, 0)) * 100)}%. 
-                  {Math.round((taskCompletionData.reduce((sum, day) => sum + day.completed, 0) / 
+                  {Math.round((taskCompletionData.reduce((sum, day) => sum + day.done, 0) / 
                   taskCompletionData.reduce((sum, day) => sum + day.total, 0)) * 100) > 70 ? 
                     "Excellent work keeping on top of your tasks!" : 
                     "Consider breaking down tasks into smaller, more manageable pieces to improve completion rate."}
@@ -744,6 +661,31 @@ export default function TasksPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {showAIHelper && (
+        <Dialog open={showAIHelper} onOpenChange={setShowAIHelper}>
+          <DialogContent className="max-w-[800px]">
+            <DialogHeader>
+              <DialogTitle>AI Task Assistant</DialogTitle>
+              <DialogDescription>
+                {selectedTask 
+                  ? "Modify your task with AI assistance" 
+                  : "Create a new task with AI assistance"}
+              </DialogDescription>
+            </DialogHeader>
+            <AssistantHelper 
+              type="task"
+              originalContent={selectedTask?.description}
+              onResult={handleAIResult}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAIHelper(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 } 

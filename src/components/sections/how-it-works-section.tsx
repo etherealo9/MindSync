@@ -25,6 +25,44 @@ export default function HowItWorksSection() {
           </p>
         </div>
         
+        {/* Key Features Highlight - Added for emphasis */}
+        <div className="mx-auto max-w-5xl mb-20">
+          <div className="bg-accent/20 backdrop-blur-sm rounded-xl p-8 border-2 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,0.7)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.7)]">
+            <h3 className="text-3xl font-bold mb-6 text-center uppercase">Key Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-background/60 dark:bg-background/40 p-5 rounded-lg border-2 border-black dark:border-white">
+                <div className="flex items-center mb-3">
+                  <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center mr-3">
+                    <Icons.profile className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xl font-bold">Your Data, Your Control</h4>
+                </div>
+                <p className="text-foreground/80">Complete data ownership with your Supabase and AI API keys.</p>
+              </div>
+              
+              <div className="bg-background/60 dark:bg-background/40 p-5 rounded-lg border-2 border-black dark:border-white">
+                <div className="flex items-center mb-3">
+                  <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center mr-3">
+                    <Icons.rocket className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xl font-bold">1-Click Deployment</h4>
+                </div>
+                <p className="text-foreground/80">Deploy to Netlify, Vercel, or Docker with a single click.</p>
+              </div>
+              
+              <div className="bg-background/60 dark:bg-background/40 p-5 rounded-lg border-2 border-black dark:border-white">
+                <div className="flex items-center mb-3">
+                  <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center mr-3">
+                    <Icons.github className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xl font-bold">Open Source</h4>
+                </div>
+                <p className="text-foreground/80">Fully customizable with unlimited possibilities for expansion.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-10 relative">
           {/* Connecting line for desktop */}
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-black/10 dark:bg-white/10 hidden md:block" aria-hidden="true"></div>
@@ -85,7 +123,7 @@ export default function HowItWorksSection() {
                   <div className="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center mr-3">
                     <Icons.check className="h-4 w-4 text-green-600" />
                   </div>
-                  <span className="text-lg font-medium">Real-time subscriptions</span>
+                  <span className="text-lg font-medium">Your data, your control</span>
                 </li>
               </ul>
             </div>
@@ -104,7 +142,13 @@ export default function HowItWorksSection() {
                   <div className="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center mr-3">
                     <Icons.check className="h-4 w-4 text-green-600" />
                   </div>
-                  <span className="text-lg font-medium">OpenAI for AI assistant</span>
+                  <span className="text-lg font-medium">Multiple AI providers</span>
+                </li>
+                <li className="flex items-center bg-white/30 dark:bg-black/30 p-3 rounded-lg transition-transform hover:translate-x-1">
+                  <div className="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-4 w-4 text-green-600" />
+                  </div>
+                  <span className="text-lg font-medium">OpenAI & Hugging Face</span>
                 </li>
                 <li className="flex items-center bg-white/30 dark:bg-black/30 p-3 rounded-lg transition-transform hover:translate-x-1">
                   <div className="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center mr-3">
@@ -112,11 +156,72 @@ export default function HowItWorksSection() {
                   </div>
                   <span className="text-lg font-medium">Google Calendar API</span>
                 </li>
-                <li className="flex items-center bg-white/30 dark:bg-black/30 p-3 rounded-lg transition-transform hover:translate-x-1">
-                  <div className="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center mr-3">
-                    <Icons.check className="h-4 w-4 text-green-600" />
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        {/* Added section for deployment and data ownership */}
+        <div className="mt-20 mx-auto max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Deployment Options */}
+            <div className="bg-background/50 dark:bg-background/30 backdrop-blur-sm rounded-xl p-6 border-2 border-black dark:border-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.2)] animate-slide-up" style={{ animationDelay: "700ms" }}>
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center mr-4">
+                  <Icons.rocket className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-bold uppercase">One-Click Deployment</h3>
+              </div>
+              <p className="text-lg mb-4">Deploy your own instance in minutes with our streamlined options:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-3 w-3 text-green-600" />
                   </div>
-                  <span className="text-lg font-medium">OAuth 2.0 authentication</span>
+                  <span className="font-medium">Netlify: Push-button deployment</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-3 w-3 text-green-600" />
+                  </div>
+                  <span className="font-medium">Vercel: Instant cloud deployment</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-3 w-3 text-green-600" />
+                  </div>
+                  <span className="font-medium">Docker: Self-host anywhere</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Data Ownership */}
+            <div className="bg-background/50 dark:bg-background/30 backdrop-blur-sm rounded-xl p-6 border-2 border-black dark:border-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.2)] animate-slide-up" style={{ animationDelay: "900ms" }}>
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center mr-4">
+                  <Icons.profile className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-bold uppercase">Your Data, Your Control</h3>
+              </div>
+              <p className="text-lg mb-4">MindSync respects your privacy and data ownership:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-3 w-3 text-green-600" />
+                  </div>
+                  <span className="font-medium">Bring your own Supabase credentials</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-3 w-3 text-green-600" />
+                  </div>
+                  <span className="font-medium">Use your own AI provider API keys</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/30 flex items-center justify-center mr-3">
+                    <Icons.check className="h-3 w-3 text-green-600" />
+                  </div>
+                  <span className="font-medium">100% data ownership and control</span>
                 </li>
               </ul>
             </div>

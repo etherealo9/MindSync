@@ -17,8 +17,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useGoogleCalendar } from "@/lib/hooks/useGoogleCalendar";
+import { SettingsAPI, UserSettings } from "@/lib/supabase/database";
+import { useAuth } from "@/lib/supabase/auth-context";
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
   const [googleCalSync, setGoogleCalSync] = useState(false);
@@ -27,9 +30,10 @@ export default function SettingsPage() {
   const [compactMode, setCompactMode] = useState(false);
   const [dataUsage, setDataUsage] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
+  const [loading, setLoading] = useState(true);
   const { isLoading, error, isConnected, connect, checkConnection } = useGoogleCalendar();
   
-  // Handle hydration
+  // Handle hydration and fetch user settings
   useEffect(() => {
     setMounted(true);
     
@@ -42,7 +46,29 @@ export default function SettingsPage() {
     };
     
     checkGoogleConnection();
-  }, [checkConnection]);
+
+    // Fetch user settings
+    const fetchUserSettings = async () => {
+      if (!user) return;
+      
+      try {
+        const settings = await SettingsAPI.getSettings(user.id);
+        if (settings) {
+          // Apply settings to state
+          setTheme(settings.theme);
+          setNotifications(settings.notification_enabled);
+          // Additional settings could be added to the UserSettings type
+        }
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+        toast.error("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserSettings();
+  }, [user, checkConnection, setTheme]);
 
   // Check if dark mode is active
   const isDarkMode = mounted && (resolvedTheme === 'dark');
@@ -59,10 +85,28 @@ export default function SettingsPage() {
     setTheme(value);
   };
 
-  const saveChanges = () => {
-    toast.success("Settings saved successfully!");
+  // Save settings to database
+  const saveChanges = async () => {
+    if (!user) {
+      toast.error("You must be logged in to save settings");
+      return;
+    }
+
+    try {
+      await SettingsAPI.saveSettings({
+        user_id: user.id,
+        theme: theme as UserSettings['theme'],
+        notification_enabled: notifications
+        // Additional settings can be added here
+      });
+      
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Failed to save settings");
+    }
   };
-  
+
   const handleConnectGoogle = async () => {
     try {
       await connect();
@@ -74,8 +118,12 @@ export default function SettingsPage() {
     }
   };
 
-  if (!mounted) {
-    return null;
+  if (loading && !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (

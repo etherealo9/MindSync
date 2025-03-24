@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,115 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase/client";
+
+// Define a type for user profile data
+type UserProfile = {
+  id?: string;
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  bio?: string;
+  location?: string;
+  timezone?: string;
+  avatar_url?: string;
+};
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+        
+        // If profile exists, use it
+        if (data) {
+          setProfile(data);
+        } else {
+          // Create a default profile if none exists
+          setProfile({
+            user_id: user.id,
+            first_name: '',
+            last_name: '',
+            bio: '',
+            location: '',
+            timezone: ''
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast.error("Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // Save profile changes
+  const saveProfile = async () => {
+    if (!user || !profile) return;
+    
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+          ...profile,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setProfile(data);
+      setIsEditing(false);
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle profile field changes
+  const handleChange = (field: keyof UserProfile, value: string) => {
+    if (profile) {
+      setProfile({
+        ...profile,
+        [field]: value
+      });
+    }
+  };
+
+  if (loading && !profile) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto py-6">
@@ -33,7 +139,7 @@ export default function ProfilePage() {
             <CardContent className="flex flex-col items-center space-y-4">
               <div className="relative h-32 w-32 overflow-hidden rounded-full">
                 <OptimizedImage
-                  src="/placeholder-user.jpg"
+                  src={profile?.avatar_url || "/placeholder-user.jpg"}
                   alt="Profile picture"
                   fill
                   usePlaceholder={true}
@@ -107,7 +213,8 @@ export default function ProfilePage() {
                       <Input 
                         id="first-name" 
                         placeholder="First name" 
-                        defaultValue="John"
+                        value={profile?.first_name || ""}
+                        onChange={(e) => handleChange('first_name', e.target.value)}
                         readOnly={!isEditing}
                       />
                     </div>
@@ -116,7 +223,8 @@ export default function ProfilePage() {
                       <Input 
                         id="last-name" 
                         placeholder="Last name" 
-                        defaultValue="Doe"
+                        value={profile?.last_name || ""}
+                        onChange={(e) => handleChange('last_name', e.target.value)}
                         readOnly={!isEditing}
                       />
                     </div>
@@ -128,9 +236,13 @@ export default function ProfilePage() {
                       id="email" 
                       type="email" 
                       placeholder="Your email" 
-                      defaultValue="john@example.com"
-                      readOnly={!isEditing}
+                      value={user?.email || ""}
+                      readOnly={true}
+                      disabled
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Email addresses can only be changed in account settings.
+                    </p>
                   </div>
                   
                   <div className="space-y-2">
@@ -138,7 +250,8 @@ export default function ProfilePage() {
                     <Textarea 
                       id="bio" 
                       placeholder="Tell us a bit about yourself" 
-                      defaultValue="I'm a productivity enthusiast always looking for ways to improve my workflow and daily habits."
+                      value={profile?.bio || ""}
+                      onChange={(e) => handleChange('bio', e.target.value)}
                       readOnly={!isEditing}
                     />
                   </div>
@@ -149,7 +262,8 @@ export default function ProfilePage() {
                       <Input 
                         id="location" 
                         placeholder="Your location" 
-                        defaultValue="New York, USA"
+                        value={profile?.location || ""}
+                        onChange={(e) => handleChange('location', e.target.value)}
                         readOnly={!isEditing}
                       />
                     </div>
@@ -158,7 +272,8 @@ export default function ProfilePage() {
                       <Input 
                         id="timezone" 
                         placeholder="Your timezone" 
-                        defaultValue="UTC-5 (Eastern Time)"
+                        value={profile?.timezone || ""}
+                        onChange={(e) => handleChange('timezone', e.target.value)}
                         readOnly={!isEditing}
                       />
                     </div>
@@ -166,7 +281,7 @@ export default function ProfilePage() {
                 </CardContent>
                 <CardFooter>
                   {isEditing && (
-                    <Button onClick={() => setIsEditing(false)}>
+                    <Button onClick={saveProfile}>
                       Save Changes
                     </Button>
                   )}
@@ -177,55 +292,16 @@ export default function ProfilePage() {
             <TabsContent value="preferences">
               <Card>
                 <CardHeader>
-                  <CardTitle>Application Preferences</CardTitle>
+                  <CardTitle>Account Preferences</CardTitle>
                   <CardDescription>
-                    Customize how the application works for you.
+                    Configure your account preferences and settings.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="language">Language</Label>
-                    <select 
-                      id="language" 
-                      className="w-full rounded-md border border-input bg-background px-3 py-2"
-                      aria-label="Select language"
-                    >
-                      <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                      <option value="de">German</option>
-                    </select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="task-reminder">Default Task Reminder Time</Label>
-                    <Input 
-                      id="task-reminder" 
-                      type="time" 
-                      defaultValue="09:00" 
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      The default time for task reminders.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="weekly-goal">Weekly Task Goal</Label>
-                    <Input 
-                      id="weekly-goal" 
-                      type="number" 
-                      min="1" 
-                      max="100" 
-                      defaultValue="15" 
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Your target number of tasks to complete each week.
-                    </p>
-                  </div>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">
+                    Account preferences are managed in the Settings page.
+                  </p>
                 </CardContent>
-                <CardFooter>
-                  <Button>Save Preferences</Button>
-                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>

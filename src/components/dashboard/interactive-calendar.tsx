@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,44 +32,41 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { FormControl, FormField, FormItem, FormLabel, Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Task, JournalEntry, TasksAPI, JournalAPI } from "@/lib/supabase/database";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { toast } from "sonner";
 
-type EventType = "task" | "journal" | "note";
+// Define valid priority and status values
+type TaskPriority = "low" | "medium" | "high";
+type TaskStatus = "todo" | "in_progress" | "done";
 
-interface CalendarEvent {
-  id: number;
+interface Event {
+  id?: string;
   title: string;
-  date: Date;
-  type: EventType;
   description?: string;
-  time?: string;
-  priority?: string;
+  date: string;
+  type: "task" | "journal" | "note";
+  priority?: TaskPriority;
+  status?: TaskStatus;
+  userId?: string;
   reminder?: boolean;
-  status?: string;
 }
 
-// Mock data for demo purposes
-const mockEvents: CalendarEvent[] = [
-  { id: 1, title: "Project planning", date: new Date(), type: "task", priority: "high", time: "13:00", status: "pending" },
-  { id: 2, title: "Team meeting", date: new Date(Date.now() + 86400000), type: "task", time: "15:00", priority: "medium", status: "pending" },
-  { id: 3, title: "Learned about async/await", date: new Date(Date.now() - 86400000), type: "journal" },
-  { id: 4, title: "Ideas for new app", date: new Date(), type: "note" },
-];
+// Extended type for new event form
+interface EventForm extends Event {
+  time?: string; // Additional field for time input
+}
+
+type NewEvent = Partial<EventForm>;
 
 export function InteractiveCalendar() {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [addEventOpen, setAddEventOpen] = useState(false);
-  const [events, setEvents] = useState<CalendarEvent[]>(mockEvents);
-  const [newEvent, setNewEvent] = useState<Partial<CalendarEvent>>({
-    title: "",
-    description: "",
-    type: "task",
-    date: new Date(),
-    time: "",
-    priority: "medium",
-    reminder: false,
-    status: "pending"
-  });
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newEvent, setNewEvent] = useState<NewEvent>({});
   
   // Form context for better input handling
   const form = useForm({
@@ -81,42 +78,149 @@ export function InteractiveCalendar() {
       time: "",
       priority: "medium",
       reminder: false,
-      status: "pending"
+      status: "todo"
     }
   });
   
   // Get events for selected date
   const selectedDateEvents = selectedDate
-    ? events.filter((event) => isSameDay(event.date, selectedDate))
+    ? events.filter((event) => isSameDay(new Date(event.date), selectedDate))
     : [];
 
-  // Handle adding new event
-  const handleAddEvent = () => {
-    if (selectedDate && newEvent.title) {
-      const event: CalendarEvent = {
-        id: Date.now(),
-        title: newEvent.title || "",
-        description: newEvent.description || "",
-        date: selectedDate,
-        type: newEvent.type as EventType || "task",
-        time: newEvent.time,
-        priority: newEvent.priority,
-        reminder: newEvent.reminder,
-        status: newEvent.status
-      };
+  // Fetch events for the current month
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (!user || !selectedDate) return;
+
+      try {
+        setLoading(true);
+        
+        // Fetch tasks
+        const tasks = await TasksAPI.getTasks(user.id);
+        const taskEvents: Event[] = tasks.map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          date: task.due_date || new Date().toISOString(),
+          type: "task",
+          status: task.status as TaskStatus,
+          priority: task.priority as TaskPriority
+        }));
+
+        // Fetch journal entries
+        const entries = await JournalAPI.getEntries(user.id);
+        const journalEvents: Event[] = entries.map(entry => ({
+          id: entry.id,
+          title: entry.title,
+          description: entry.content,
+          date: entry.created_at,
+          type: "journal"
+        }));
+
+        setEvents([...taskEvents, ...journalEvents]);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        toast.error("Failed to load calendar events");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [user, selectedDate]);
+
+  // Create new event
+  const createEvent = async () => {
+    if (!user || !selectedDate || !newEvent.title || !newEvent.type) {
+      toast.error("Please provide a title and type for the new item");
+      return;
+    }
+
+    try {
+      // Create a date object with the selected date and time if provided
+      let eventDate = new Date(selectedDate);
+      if (newEvent.time) {
+        const [hours, minutes] = newEvent.time.split(':').map(Number);
+        eventDate.setHours(hours, minutes);
+      }
       
-      setEvents([...events, event]);
-      setNewEvent({ 
-        title: "", 
-        description: "", 
-        type: "task",
-        date: selectedDate,
-        time: "",
-        priority: "medium",
-        reminder: false,
-        status: "pending"
-      });
+      if (newEvent.type === "task") {
+        // Create task with the API
+        const task = await TasksAPI.createTask({
+          user_id: user.id,
+          title: newEvent.title,
+          description: newEvent.description || "",
+          due_date: eventDate.toISOString(),
+          status: (newEvent.status as TaskStatus) || "todo",
+          priority: (newEvent.priority as TaskPriority) || "medium"
+        });
+
+        // Add to local state
+        const newTaskEvent: Event = {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          date: task.due_date || new Date().toISOString(),
+          type: "task",
+          status: task.status as TaskStatus,
+          priority: task.priority as TaskPriority
+        };
+        
+        setEvents(prev => [...prev, newTaskEvent]);
+        toast.success("Task created successfully");
+      } else if (newEvent.type === "journal") {
+        // Create journal with the API
+        const entry = await JournalAPI.createEntry({
+          user_id: user.id,
+          title: newEvent.title,
+          content: newEvent.description || "",
+          mood: "neutral",
+          tags: []
+        });
+
+        // Add to local state
+        const newJournalEvent: Event = {
+          id: entry.id,
+          title: entry.title,
+          description: entry.content,
+          date: entry.created_at,
+          type: "journal"
+        };
+        
+        setEvents(prev => [...prev, newJournalEvent]);
+        toast.success("Journal entry created successfully");
+      } else if (newEvent.type === "note") {
+        // Create note in the database
+        // For now, we'll use TasksAPI to store notes as tasks with low priority
+        const note = await TasksAPI.createTask({
+          user_id: user.id,
+          title: newEvent.title,
+          description: newEvent.description || "",
+          due_date: eventDate.toISOString(),
+          status: "todo",
+          priority: "low"
+        });
+
+        // Add to local state
+        const newNoteEvent: Event = {
+          id: note.id,
+          title: note.title,
+          description: note.description,
+          date: note.due_date || new Date().toISOString(),
+          type: "note", // Mark as note type
+          priority: "low"
+        };
+        
+        setEvents(prev => [...prev, newNoteEvent]);
+        toast.success("Note created successfully");
+      }
+
+      // Reset form and close dialog
+      setNewEvent({});
       setAddEventOpen(false);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast.error(`Failed to create ${newEvent.type}. Please try again.`);
     }
   };
 
@@ -131,21 +235,21 @@ export function InteractiveCalendar() {
   };
 
   // Badge colors based on event type
-  const getEventBadgeVariant = (type: EventType) => {
+  const getEventBadgeVariant = (type: "task" | "journal" | "note") => {
     switch (type) {
       case "task":
         return "destructive";
       case "journal":
         return "accent";
       case "note":
-        return "outline";
+        return "secondary";
       default:
         return "default";
     }
   };
 
   // Get priority badge style
-  const getPriorityBadge = (priority?: string) => {
+  const getPriorityBadge = (priority?: TaskPriority) => {
     if (!priority) return null;
     
     switch (priority) {
@@ -159,6 +263,41 @@ export function InteractiveCalendar() {
         return null;
     }
   };
+
+  // Handle time change
+  const handleTimeChange = (time: string) => {
+    if (!selectedDate) return;
+    setNewEvent(prev => ({ ...prev, time }));
+  };
+
+  // Handle priority change with type safety
+  const handlePriorityChange = (value: string) => {
+    if (value === "low" || value === "medium" || value === "high") {
+      const priority = value as TaskPriority;
+      setNewEvent(prev => ({ ...prev, priority }));
+    }
+  };
+
+  // Handle status change with type safety
+  const handleStatusChange = (value: string) => {
+    if (value === "todo" || value === "in_progress" || value === "done") {
+      const status = value as TaskStatus;
+      setNewEvent(prev => ({ ...prev, status }));
+    }
+  };
+
+  // Handle reminder change
+  const handleReminderChange = (checked: boolean) => {
+    setNewEvent(prev => ({ ...prev, reminder: checked }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full" variant="brutal">
@@ -234,7 +373,7 @@ export function InteractiveCalendar() {
                 <span className="text-xs">Journal</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="h-2.5 w-2.5 rounded-full bg-yellow-500"></div>
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500"></div>
                 <span className="text-xs">Notes</span>
               </div>
             </div>
@@ -255,7 +394,7 @@ export function InteractiveCalendar() {
                     <div key={event.id} className="flex flex-col gap-1 pb-3 border-b">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium">{event.title}</h4>
-                        <Badge variant={getEventBadgeVariant(event.type)}>
+                        <Badge variant={getEventBadgeVariant(event.type as "task" | "journal" | "note")}>
                           {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
                         </Badge>
                       </div>
@@ -263,14 +402,7 @@ export function InteractiveCalendar() {
                         <p className="text-sm text-muted-foreground">{event.description}</p>
                       )}
                       <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                        {event.time && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            <span>{event.time}</span>
-                          </div>
-                        )}
                         {event.priority && getPriorityBadge(event.priority)}
-                        {event.status && <span className="px-2 py-0.5 bg-muted rounded-full text-xs">{event.status}</span>}
                       </div>
                     </div>
                   ))}
@@ -356,7 +488,7 @@ export function InteractiveCalendar() {
                       id="time"
                       type="time"
                       value={newEvent.time || ""}
-                      onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                      onChange={(e) => handleTimeChange(e.target.value)}
                     />
                   </div>
                 </div>
@@ -376,8 +508,8 @@ export function InteractiveCalendar() {
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
                     <Select 
-                      value={newEvent.priority} 
-                      onValueChange={(value) => setNewEvent({ ...newEvent, priority: value })}
+                      value={newEvent.priority || "medium"} 
+                      onValueChange={handlePriorityChange}
                     >
                       <SelectTrigger id="priority">
                         <SelectValue placeholder="Select priority" />
@@ -394,16 +526,16 @@ export function InteractiveCalendar() {
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select 
-                      value={newEvent.status} 
-                      onValueChange={(value) => setNewEvent({ ...newEvent, status: value })}
+                      value={newEvent.status || "todo"} 
+                      onValueChange={handleStatusChange}
                     >
                       <SelectTrigger id="status">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="todo">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="done">Completed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -413,7 +545,7 @@ export function InteractiveCalendar() {
                   <Switch
                     id="reminder"
                     checked={newEvent.reminder || false}
-                    onCheckedChange={(checked) => setNewEvent({ ...newEvent, reminder: checked })}
+                    onCheckedChange={handleReminderChange}
                   />
                   <Label htmlFor="reminder">Set a reminder</Label>
                 </div>
@@ -471,7 +603,7 @@ export function InteractiveCalendar() {
               </div>
             </TabsContent>
 
-            {/* Note Form */}
+            {/* Notes Form */}
             <TabsContent value="note" className="mt-4">
               <div className="grid gap-4">
                 <div className="grid gap-2">
@@ -513,7 +645,7 @@ export function InteractiveCalendar() {
                   <Label htmlFor="n-content">Note Content</Label>
                   <Textarea
                     id="n-content"
-                    placeholder="Your note..."
+                    placeholder="Write your note here..."
                     className="min-h-[150px]"
                     value={newEvent.description || ""}
                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
@@ -526,7 +658,7 @@ export function InteractiveCalendar() {
             <Button variant="outline" onClick={() => setAddEventOpen(false)}>
               Cancel
             </Button>
-            <Button variant="accent" onClick={handleAddEvent}>
+            <Button variant="accent" onClick={createEvent}>
               Add
             </Button>
           </DialogFooter>

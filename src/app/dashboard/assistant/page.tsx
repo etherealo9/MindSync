@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AIMessage } from "@/lib/ai/openai";
-import { generateAIResponse } from "@/lib/actions/ai-actions";
+import { generateAIResponse, AIProvider } from "@/lib/actions/ai-actions";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,13 @@ import { NotificationsAPI } from "@/lib/utils/notifications";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AssistantPage() {
   const { user } = useAuth();
@@ -26,6 +33,8 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(true);
+  const [aiProvider, setAIProvider] = useState<AIProvider>("openai");
+  const [currentProvider, setCurrentProvider] = useState<AIProvider | undefined>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +62,10 @@ export default function AssistantPage() {
       ];
       
       // Use the server action instead of the client service
-      const response = await generateAIResponse(fullMessageHistory);
+      const response = await generateAIResponse(fullMessageHistory, aiProvider);
+      
+      // Store the provider that was actually used
+      setCurrentProvider(response.provider);
       
       // Check if there was an error
       if (response.id.startsWith('error')) {
@@ -95,7 +107,9 @@ export default function AssistantPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Configuration Error</AlertTitle>
             <AlertDescription>
-              The OpenAI API key is missing or invalid. Please add OPENAI_API_KEY to your .env.local file.
+              {aiProvider === 'openai' 
+                ? "The OpenAI API key is missing or invalid. Please add OPENAI_API_KEY to your .env.local file."
+                : "The HuggingFace API key is missing or invalid. Please add HUGGINGFACE_API_KEY to your .env.local file."}
             </AlertDescription>
           </Alert>
         )}
@@ -106,8 +120,24 @@ export default function AssistantPage() {
             <CardDescription>
               Ask me about task management, journaling tips, productivity advice, or anything else!
             </CardDescription>
+            <div className="flex items-center mt-2">
+              <span className="text-sm mr-2">AI Provider:</span>
+              <Select 
+                value={aiProvider} 
+                onValueChange={(value) => setAIProvider(value as AIProvider)}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Select Provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="huggingface">HuggingFace</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          
+          <CardContent>
             <div className="h-[400px] overflow-y-auto p-4 border rounded-md">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -129,6 +159,11 @@ export default function AssistantPage() {
                     >
                       <div className="font-medium mb-1">
                         {message.role === "user" ? "You" : "Assistant"}
+                        {index > 0 && index % 2 === 1 && currentProvider && (
+                          <span className="text-xs ml-2 text-gray-500">
+                            via {currentProvider === 'openai' ? 'OpenAI' : 'HuggingFace'}
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm whitespace-pre-wrap">
                         {message.content}
@@ -145,10 +180,11 @@ export default function AssistantPage() {
               )}
             </div>
           </CardContent>
+          
           <CardFooter>
             <form onSubmit={handleSubmit} className="w-full space-y-2">
               <Textarea
-                placeholder={isConfigured ? "Type your message here..." : "AI Assistant unavailable - API key missing"}
+                placeholder={isConfigured ? "Type your message here..." : `${aiProvider === 'openai' ? 'OpenAI' : 'HuggingFace'} AI Assistant unavailable - API key missing`}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="w-full resize-none"
@@ -175,6 +211,9 @@ export default function AssistantPage() {
               <li>Productivity techniques and advice</li>
               <li>Habit formation and goal setting</li>
               <li>Work-life balance suggestions</li>
+              <li>Adding or modifying journal entries</li>
+              <li>Adding or modifying tasks and notes</li>
+              <li>Querying your historical data</li>
             </ul>
           </CardContent>
         </Card>

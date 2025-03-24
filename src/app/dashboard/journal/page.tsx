@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { InfoIcon } from "lucide-react";
 import { LineChartComponent, PieChartComponent, AreaChartComponent } from "@/components/charts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { JournalAPI, JournalEntry as SupabaseJournalEntry } from "@/lib/supabase/database";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { toast } from "sonner";
+import AssistantHelper from "@/components/ai/AssistantHelper";
 
-// Journal entry type definition
+// Local journal entry type definition
 type JournalEntry = {
   id: string;
   title: string;
@@ -30,34 +34,22 @@ type JournalEntry = {
   tags?: string[];
 };
 
+// Convert Supabase journal entry to local type
+const mapJournalEntry = (entry: SupabaseJournalEntry): JournalEntry => {
+  return {
+    id: entry.id,
+    title: entry.title,
+    content: entry.content,
+    date: entry.created_at, // Use created_at as the date
+    mood: (entry.mood as "happy" | "neutral" | "sad") || "neutral",
+    tags: entry.tags
+  };
+};
+
 export default function JournalPage() {
-  // Sample journal entries data
-  const [entries, setEntries] = useState<JournalEntry[]>([
-    {
-      id: "1",
-      title: "Project Progress",
-      content: "Today I made significant progress on the new feature implementation. Feeling more confident about meeting the deadline.",
-      date: "2025-03-22",
-      mood: "happy",
-      tags: ["work", "coding"],
-    },
-    {
-      id: "2",
-      title: "Client Meeting",
-      content: "Meeting with the client went well. We clarified requirements and set expectations for the project timeline.",
-      date: "2025-03-21",
-      mood: "neutral",
-      tags: ["work", "client"],
-    },
-    {
-      id: "3",
-      title: "Technical Challenges",
-      content: "Faced some technical challenges with the database integration. Need to research more tomorrow.",
-      date: "2025-03-20",
-      mood: "sad",
-      tags: ["work", "challenge"],
-    },
-  ]);
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [newEntryTitle, setNewEntryTitle] = useState("");
   const [newEntryContent, setNewEntryContent] = useState("");
@@ -89,29 +81,55 @@ export default function JournalPage() {
     { name: "Sad", value: entries.filter(e => e.mood === "sad").length },
   ];
 
+  // Fetch journal entries
+  useEffect(() => {
+    const fetchEntries = async () => {
+      if (!user) return;
+      
+      try {
+        const journalEntries = await JournalAPI.getEntries(user.id);
+        // Map Supabase entries to local JournalEntry type
+        setEntries(journalEntries.map(mapJournalEntry));
+      } catch (error) {
+        console.error("Error fetching journal entries:", error);
+        toast.error("Failed to load journal entries");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEntries();
+  }, [user]);
+
   // Add new journal entry
-  const addEntry = () => {
-    if (newEntryTitle.trim() === "" || newEntryContent.trim() === "") return;
+  const addEntry = async () => {
+    if (!user || newEntryTitle.trim() === "" || newEntryContent.trim() === "") return;
     
     const tagsArray = newEntryTags
       .split(",")
       .map(tag => tag.trim())
       .filter(tag => tag !== "");
     
-    const newEntry: JournalEntry = {
-      id: Date.now().toString(),
-      title: newEntryTitle,
-      content: newEntryContent,
-      date: new Date().toISOString().split("T")[0],
-      mood: newEntryMood,
-      tags: tagsArray.length > 0 ? tagsArray : undefined,
-    };
-    
-    setEntries([newEntry, ...entries]);
-    setNewEntryTitle("");
-    setNewEntryContent("");
-    setNewEntryMood("neutral");
-    setNewEntryTags("");
+    try {
+      const newEntry = await JournalAPI.createEntry({
+        user_id: user.id,
+        title: newEntryTitle,
+        content: newEntryContent,
+        mood: newEntryMood,
+        tags: tagsArray.length > 0 ? tagsArray : undefined,
+      });
+      
+      // Convert the new entry to our local type and add it to the state
+      setEntries([mapJournalEntry(newEntry), ...entries]);
+      setNewEntryTitle("");
+      setNewEntryContent("");
+      setNewEntryMood("neutral");
+      setNewEntryTags("");
+      toast.success("Journal entry created successfully");
+    } catch (error) {
+      console.error("Error creating journal entry:", error);
+      toast.error("Failed to create journal entry");
+    }
   };
 
   // Get mood icon
@@ -179,6 +197,65 @@ export default function JournalPage() {
         );
     }
   };
+
+  // Add this function where appropriate, before the return statement in the JournalPage component
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
+  const [showAIHelper, setShowAIHelper] = useState(false);
+
+  const handleAIResult = async (result: string) => {
+    if (selectedEntry) {
+      // Handle modification of existing entry
+      try {
+        await JournalAPI.updateEntry(selectedEntry.id, {
+          title: selectedEntry.title,
+          content: result,
+          mood: selectedEntry.mood,
+          tags: selectedEntry.tags || []
+        });
+        
+        // Update the local state
+        setEntries(entries.map(entry => 
+          entry.id === selectedEntry.id 
+            ? { ...entry, content: result }
+            : entry
+        ));
+        
+        toast.success("Journal entry updated with AI suggestion");
+        setShowAIHelper(false);
+      } catch (error) {
+        console.error("Error updating entry:", error);
+        toast.error("Failed to update journal entry");
+      }
+    } else {
+      // Handle adding a new entry
+      try {
+        const newEntry = await JournalAPI.createEntry({
+          user_id: user!.id,
+          title: "AI Generated Entry",
+          content: result,
+          mood: "neutral",
+          tags: ["ai-generated"]
+        });
+        
+        if (newEntry) {
+          setEntries([mapJournalEntry(newEntry), ...entries]);
+          toast.success("New journal entry created with AI");
+          setShowAIHelper(false);
+        }
+      } catch (error) {
+        console.error("Error adding entry:", error);
+        toast.error("Failed to create new journal entry");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -353,6 +430,16 @@ export default function JournalPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm whitespace-pre-wrap">{entry.content}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setSelectedEntry(entry);
+                      setShowAIHelper(true);
+                    }}
+                  >
+                    AI Assist
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -449,6 +536,31 @@ export default function JournalPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {showAIHelper && (
+        <Dialog open={showAIHelper} onOpenChange={setShowAIHelper}>
+          <DialogContent className="max-w-[800px]">
+            <DialogHeader>
+              <DialogTitle>AI Journal Assistant</DialogTitle>
+              <DialogDescription>
+                {selectedEntry 
+                  ? "Modify your journal entry with AI assistance" 
+                  : "Create a new journal entry with AI assistance"}
+              </DialogDescription>
+            </DialogHeader>
+            <AssistantHelper 
+              type="journal"
+              originalContent={selectedEntry?.content}
+              onResult={handleAIResult}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAIHelper(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 } 
