@@ -37,7 +37,7 @@ export default function AssistantHelper({
   const [input, setInput] = useState("");
   const [action, setAction] = useState<'add' | 'modify'>(originalContent ? 'modify' : 'add');
   const [isLoading, setIsLoading] = useState(false);
-  const [aiProvider, setAIProvider] = useState<AIProvider>("openai");
+  const [aiProvider, setAIProvider] = useState<AIProvider>("groq");
   const [result, setResult] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,6 +166,7 @@ export default function AssistantHelper({
               <SelectValue placeholder="AI Provider" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="groq">Groq</SelectItem>
               <SelectItem value="openai">OpenAI</SelectItem>
               <SelectItem value="huggingface">HuggingFace</SelectItem>
             </SelectContent>

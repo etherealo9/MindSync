@@ -50,6 +50,9 @@ export default function JournalPage() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
+  const [showAIHelper, setShowAIHelper] = useState(false);
+  const [editEntryOpen, setEditEntryOpen] = useState(false);
 
   const [newEntryTitle, setNewEntryTitle] = useState("");
   const [newEntryContent, setNewEntryContent] = useState("");
@@ -198,9 +201,39 @@ export default function JournalPage() {
     }
   };
 
-  // Add this function where appropriate, before the return statement in the JournalPage component
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  const [showAIHelper, setShowAIHelper] = useState(false);
+  // Handle editing a journal entry
+  const editEntry = async () => {
+    if (!selectedEntry || !user) return;
+    
+    try {
+      // Process tags
+      const tags = selectedEntry.tags || [];
+      
+      const updatedEntry = await JournalAPI.updateEntry(selectedEntry.id, {
+        title: selectedEntry.title,
+        content: selectedEntry.content,
+        mood: selectedEntry.mood,
+        tags
+      });
+      
+      // Update entries list
+      setEntries(entries.map(entry => 
+        entry.id === selectedEntry.id ? mapJournalEntry(updatedEntry) : entry
+      ));
+      
+      toast.success("Journal entry updated successfully");
+      setEditEntryOpen(false);
+    } catch (error) {
+      console.error("Error updating journal entry:", error);
+      toast.error("Failed to update journal entry");
+    }
+  };
+  
+  // Handle journal entry click for editing
+  const handleEntryClick = (entry: JournalEntry) => {
+    setSelectedEntry(entry);
+    setEditEntryOpen(true);
+  };
 
   const handleAIResult = async (result: string) => {
     if (selectedEntry) {
@@ -409,7 +442,7 @@ export default function JournalPage() {
         <TabsContent value="journal" className="space-y-6">
           <div className="space-y-4">
             {entries.map((entry) => (
-              <Card key={entry.id}>
+              <Card key={entry.id} className="cursor-pointer hover:bg-accent/10 transition-colors" onClick={() => handleEntryClick(entry)}>
                 <CardHeader className="flex flex-row items-start justify-between space-y-0">
                   <div>
                     <CardTitle className="text-lg">{entry.title}</CardTitle>
@@ -430,16 +463,19 @@ export default function JournalPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm whitespace-pre-wrap">{entry.content}</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => {
-                      setSelectedEntry(entry);
-                      setShowAIHelper(true);
-                    }}
-                  >
-                    AI Assist
-                  </Button>
+                  <div className="flex gap-2 mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent opening edit dialog
+                        setSelectedEntry(entry);
+                        setShowAIHelper(true);
+                      }}
+                    >
+                      AI Assist
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -537,29 +573,110 @@ export default function JournalPage() {
         </TabsContent>
       </Tabs>
 
-      {showAIHelper && (
-        <Dialog open={showAIHelper} onOpenChange={setShowAIHelper}>
-          <DialogContent className="max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>AI Journal Assistant</DialogTitle>
-              <DialogDescription>
-                {selectedEntry 
-                  ? "Modify your journal entry with AI assistance" 
-                  : "Create a new journal entry with AI assistance"}
-              </DialogDescription>
-            </DialogHeader>
-            <AssistantHelper 
-              type="journal"
-              originalContent={selectedEntry?.content}
-              onResult={handleAIResult}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAIHelper(false)}>
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {/* Add Edit Journal Entry Dialog */}
+      <Dialog open={editEntryOpen} onOpenChange={setEditEntryOpen}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Edit Journal Entry</DialogTitle>
+            <DialogDescription>
+              Update your journal entry details
+            </DialogDescription>
+          </DialogHeader>
+          {selectedEntry && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-entry-title">Entry Title</Label>
+                <Input
+                  id="edit-entry-title"
+                  value={selectedEntry.title}
+                  onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="edit-entry-content">Journal Content</Label>
+                <textarea
+                  className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  id="edit-entry-content"
+                  value={selectedEntry.content}
+                  onChange={(e) => setSelectedEntry({ ...selectedEntry, content: e.target.value })}
+                  aria-label="Journal entry content"
+                  placeholder="Detail your thoughts, experiences, or reflections here..."
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="edit-entry-tags">Tags</Label>
+                <Input
+                  id="edit-entry-tags"
+                  value={selectedEntry.tags ? selectedEntry.tags.join(", ") : ""}
+                  onChange={(e) => setSelectedEntry({ 
+                    ...selectedEntry, 
+                    tags: e.target.value.split(",").map(tag => tag.trim()).filter(Boolean)
+                  })}
+                  placeholder="work, personal, idea, health, goal (comma-separated)"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label>Emotional State</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Button
+                    type="button"
+                    variant={selectedEntry.mood === "happy" ? "default" : "outline"}
+                    onClick={() => setSelectedEntry({ ...selectedEntry, mood: "happy" })}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    {getMoodIcon("happy")} Positive
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={selectedEntry.mood === "neutral" ? "default" : "outline"}
+                    onClick={() => setSelectedEntry({ ...selectedEntry, mood: "neutral" })}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    {getMoodIcon("neutral")} Neutral
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={selectedEntry.mood === "sad" ? "default" : "outline"}
+                    onClick={() => setSelectedEntry({ ...selectedEntry, mood: "sad" })}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    {getMoodIcon("sad")} Challenging
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEntryOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={editEntry}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Show AI helper modal if needed */}
+      {showAIHelper && selectedEntry && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>AI Assistant</CardTitle>
+              <CardDescription>Let the AI help you improve this journal entry</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AssistantHelper
+                type="journal" 
+                originalContent={selectedEntry.content}
+                onResult={handleAIResult}
+              />
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

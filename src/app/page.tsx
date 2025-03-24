@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 import dynamicImport from "next/dynamic";
 import { ClientAnimatedWrapper } from "@/components/client-animated-wrapper";
+import { PWARegister } from "@/components/client-providers";
 
 // Import sections with better loading handling
 const FeaturesSection = dynamicImport(() => import('@/components/sections/features-section'), {
@@ -267,6 +268,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      
+      {/* Install App Bubble */}
+      <PWARegister />
     </div>
   );
 }

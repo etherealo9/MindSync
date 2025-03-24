@@ -5,8 +5,8 @@ export const runtime = 'edge';
 
 // Image metadata
 export const size = {
-  width: 32,
-  height: 32,
+  width: 192,
+  height: 192,
 };
 export const contentType = 'image/png';
 
@@ -17,39 +17,77 @@ export default function Icon() {
       <div
         style={{
           fontSize: 24,
-          background: 'linear-gradient(to bottom right, #3b82f6, #8b5cf6)',
+          background: 'black',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '12%',
           color: 'white',
-          fontWeight: 700,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
+        {/* Base Background */}
+        <div style={{ 
+          position: 'absolute', 
+          inset: 0, 
+          background: 'black',
+          borderRadius: '24%',
+        }} />
+        
+        {/* Accent Color Circle */}
+        <div style={{ 
+          position: 'absolute', 
+          width: '70%', 
+          height: '70%', 
+          borderRadius: '50%', 
+          background: '#ffdd00', 
+          zIndex: 1,
+          top: '15%', 
+          left: '15%',
+        }} />
+        
+        {/* Main Icon - Brain & Sync */}
         <svg
-          width="24"
-          height="24"
+          width="65%"
+          height="65%"
           viewBox="0 0 24 24"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+          stroke="black"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ 
+            zIndex: 2, 
+            position: 'relative',
+          }}
         >
-          <path
-            d="M16 10C16 13.3137 13.3137 16 10 16C6.68629 16 4 13.3137 4 10C4 6.68629 6.68629 4 10 4C13.3137 4 16 6.68629 16 10Z"
-            fill="white"
-          />
-          <path
-            d="M20 18C20 19.1046 19.1046 20 18 20C16.8954 20 16 19.1046 16 18C16 16.8954 16.8954 16 18 16C19.1046 16 20 16.8954 20 18Z"
-            fill="white"
-          />
-          <path
-            d="M10 16C6.68629 16 4 13.3137 4 10C4 6.68629 6.68629 4 10 4"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+          {/* Brain Shape */}
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5V5a2 2 0 0 1 2 2v1a2 2 0 0 1 2 2v1a2 2 0 0 1 2 2" />
+          <path d="M12 4.5A2.5 2.5 0 0 1 14.5 2A2.5 2.5 0 0 1 17 4.5C17 5.89 17 7.33 17 8.5C17 11.5 20 11.5 20 12" />
+          <path d="M12 4.5C12 7 12 10 12 12c0 1.38 2 1.5 2 3" />
+          <path d="M4 12c0-.5 3-1 3-3.5C7 7.33 7 5.89 7 4.5A2.5 2.5 0 0 1 9.5 2" />
+          <path d="M4 12c0 .5 3 1 3 3.5" />
+          <path d="M20 12c0 .5-3 1-3 3.5" />
+          <path d="M7 16c0 2.5 3 2.5 3 5" />
+          <path d="M17 16c0 2.5-3 2.5-3 5" />
+          <path d="M12 12c0 3 0 4 0 5" />
+          <path d="M12 22c-1 0-2-.5-2-2" />
+          <path d="M12 22c1 0 2-.5 2-2" />
         </svg>
+        
+        {/* Bottom Accent Bar */}
+        <div style={{ 
+          position: 'absolute', 
+          bottom: '0%', 
+          left: '0%', 
+          width: '100%', 
+          height: '15%', 
+          background: 'white',
+          clipPath: 'polygon(0 50%, 100% 0, 100% 100%, 0% 100%)',
+          zIndex: 3,
+        }} />
       </div>
     ),
     {

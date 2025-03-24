@@ -3,6 +3,7 @@
 import OpenAI from 'openai';
 import { HfInference } from '@huggingface/inference';
 import { AIMessage } from '@/lib/ai/openai';
+import { GroqService } from '@/lib/ai/groq';
 
 // Server-side OpenAI client
 const openai = new OpenAI({
@@ -18,20 +19,24 @@ const DEFAULT_HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.2';
 export type AIResponse = {
   content: string;
   id: string;
-  provider?: 'openai' | 'huggingface';
+  provider?: 'openai' | 'huggingface' | 'groq';
 };
 
-export type AIProvider = 'openai' | 'huggingface';
+export type AIProvider = 'openai' | 'huggingface' | 'groq';
 
 // Function to determine which AI provider to use
 function getAIProvider(): AIProvider {
-  // If both are available, prefer Hugging Face
-  if (process.env.HUGGINGFACE_API_KEY && hf) {
-    return 'huggingface';
+  // If Groq is available, prefer it
+  if (process.env.GROQ_API_KEY) {
+    return 'groq';
   }
-  // Otherwise use OpenAI if available
+  // Then try OpenAI
   if (process.env.OPENAI_API_KEY) {
     return 'openai';
+  }
+  // Otherwise use HuggingFace if available
+  if (process.env.HUGGINGFACE_API_KEY && hf) {
+    return 'huggingface';
   }
   // Default to OpenAI
   return 'openai';
@@ -44,8 +49,27 @@ export async function generateAIResponse(
   // Use specified provider or auto-detect
   const actualProvider = provider || getAIProvider();
   
-  // Try Hugging Face first if specified or auto-detected
-  if (actualProvider === 'huggingface') {
+  // Try the specified provider first
+  if (actualProvider === 'groq') {
+    try {
+      const response = await GroqService.generateResponse(messages);
+      return response;
+    } catch (error: any) {
+      console.error("Groq API Error:", error);
+      
+      // Fall back to OpenAI if available
+      if (process.env.OPENAI_API_KEY) {
+        console.log('Falling back to OpenAI due to Groq error');
+        return generateOpenAIResponse(messages);
+      }
+      
+      return {
+        content: `Sorry, there was an error with the Groq service: ${error.message}`,
+        id: "error",
+        provider: "groq"
+      };
+    }
+  } else if (actualProvider === 'huggingface') {
     try {
       if (!process.env.HUGGINGFACE_API_KEY || !hf) {
         // Fall back to OpenAI if available
@@ -55,7 +79,7 @@ export async function generateAIResponse(
         }
         
         return {
-          content: "Sorry, no AI service is available at the moment.",
+          content: "HuggingFace API key is not configured. Please add a valid API key to your environment variables.",
           id: "error-missing-key",
           provider: "huggingface"
         };
@@ -116,14 +140,14 @@ async function generateOpenAIResponse(messages: AIMessage[]): Promise<AIResponse
   try {
     if (!process.env.OPENAI_API_KEY) {
       return {
-        content: "Sorry, the AI assistant is not available at the moment. The OpenAI API key is missing.",
+        content: "OpenAI API key is not configured. Please add a valid API key to your environment variables or settings page.",
         id: "error-missing-key",
         provider: "openai"
       };
     }
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       messages: messages as any,
       temperature: 0.7,
       max_tokens: 1000,

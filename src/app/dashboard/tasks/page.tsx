@@ -33,6 +33,7 @@ import { Task, TasksAPI } from "@/lib/supabase/database";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "sonner";
 import AssistantHelper from "@/components/ai/AssistantHelper";
+import { Textarea } from "@/components/ui/textarea";
 
 // Helper type for task completion data
 type TaskCompletionData = {
@@ -48,6 +49,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showAIHelper, setShowAIHelper] = useState(false);
+  const [editTaskOpen, setEditTaskOpen] = useState(false);
 
   // Move the fetchTasks function out of the useEffect so it can be reused
   const fetchTasks = async () => {
@@ -268,6 +270,38 @@ export default function TasksPage() {
     }
   };
 
+  // Handle editing a task
+  const editTask = async () => {
+    if (!selectedTask || !user) return;
+    
+    try {
+      const updatedTask = await TasksAPI.updateTask(selectedTask.id, {
+        title: selectedTask.title,
+        description: selectedTask.description,
+        due_date: selectedTask.due_date,
+        status: selectedTask.status,
+        priority: selectedTask.priority
+      });
+      
+      // Update tasks list
+      setTasks(tasks.map(task => 
+        task.id === selectedTask.id ? updatedTask : task
+      ));
+      
+      toast.success("Task updated successfully");
+      setEditTaskOpen(false);
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("Failed to update task");
+    }
+  };
+  
+  // Handle task click for editing
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setEditTaskOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -427,7 +461,7 @@ export default function TasksPage() {
           {view === "list" && (
             <div className="space-y-4">
               {tasks.map((task) => (
-                <Card key={task.id}>
+                <Card key={task.id} className="cursor-pointer hover:bg-accent/10 transition-colors" onClick={() => handleTaskClick(task)}>
                   <CardHeader className="flex flex-row items-start justify-between space-y-0">
                     <div>
                       <CardTitle className={task.status === "done" ? "text-lg line-through text-muted-foreground" : "text-lg"}>
@@ -446,7 +480,10 @@ export default function TasksPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deleteTask(task.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTask(task.id);
+                        }}
                         className="size-8"
                       >
                         <svg
@@ -490,7 +527,8 @@ export default function TasksPage() {
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
-                        className="cursor-move hover:border-accent transition-colors"
+                        className="cursor-move hover:border-accent transition-colors cursor-pointer"
+                        onClick={() => handleTaskClick(task)}
                       >
                         <CardHeader>
                           <CardTitle className="text-sm">{task.title}</CardTitle>
@@ -521,7 +559,8 @@ export default function TasksPage() {
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
-                        className="cursor-move hover:border-accent transition-colors"
+                        className="cursor-move hover:border-accent transition-colors cursor-pointer"
+                        onClick={() => handleTaskClick(task)}
                       >
                         <CardHeader>
                           <CardTitle className="text-sm">{task.title}</CardTitle>
@@ -552,7 +591,8 @@ export default function TasksPage() {
                         key={task.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
-                        className="cursor-move hover:border-accent transition-colors"
+                        className="cursor-move hover:border-accent transition-colors cursor-pointer"
+                        onClick={() => handleTaskClick(task)}
                       >
                         <CardHeader>
                           <CardTitle className="text-sm">{task.title}</CardTitle>
@@ -662,29 +702,141 @@ export default function TasksPage() {
         </TabsContent>
       </Tabs>
 
-      {showAIHelper && (
-        <Dialog open={showAIHelper} onOpenChange={setShowAIHelper}>
-          <DialogContent className="max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>AI Task Assistant</DialogTitle>
-              <DialogDescription>
-                {selectedTask 
-                  ? "Modify your task with AI assistance" 
-                  : "Create a new task with AI assistance"}
-              </DialogDescription>
-            </DialogHeader>
-            <AssistantHelper 
-              type="task"
-              originalContent={selectedTask?.description}
-              onResult={handleAIResult}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAIHelper(false)}>
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {/* Add Edit Task Dialog */}
+      <Dialog open={editTaskOpen} onOpenChange={setEditTaskOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Update your task details. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTask && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={selectedTask.title}
+                  onChange={(e) => setSelectedTask({ ...selectedTask, title: e.target.value })}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={selectedTask.description || ""}
+                  onChange={(e) => setSelectedTask({ ...selectedTask, description: e.target.value })}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {/* Date picker */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">Due Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                        id="edit-date"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedTask.due_date ? 
+                          format(new Date(selectedTask.due_date), "PPP") : 
+                          <span>No due date</span>
+                        }
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedTask.due_date ? new Date(selectedTask.due_date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            // Preserve time portion if it exists
+                            const existingDate = selectedTask.due_date ? new Date(selectedTask.due_date) : new Date();
+                            const newDate = new Date(date);
+                            newDate.setHours(existingDate.getHours());
+                            newDate.setMinutes(existingDate.getMinutes());
+                            setSelectedTask({ ...selectedTask, due_date: newDate.toISOString() });
+                          } else {
+                            setSelectedTask({ ...selectedTask, due_date: undefined });
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                {/* Priority */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-priority">Priority</Label>
+                  <Select
+                    value={selectedTask.priority}
+                    onValueChange={(value) => setSelectedTask({ ...selectedTask, priority: value as "low" | "medium" | "high" })}
+                  >
+                    <SelectTrigger id="edit-priority">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Status */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select
+                  value={selectedTask.status}
+                  onValueChange={(value) => setSelectedTask({ ...selectedTask, status: value as "todo" | "in_progress" | "done" })}
+                >
+                  <SelectTrigger id="edit-status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todo">To Do</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTaskOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={editTask}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Show AI helper modal if needed */}
+      {showAIHelper && selectedTask && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>AI Assistant</CardTitle>
+              <CardDescription>Let the AI help you improve this task</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AssistantHelper
+                type="task" 
+                originalContent={selectedTask.description || ""}
+                onResult={handleAIResult}
+              />
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

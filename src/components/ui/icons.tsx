@@ -68,19 +68,25 @@ export const Icons = {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       strokeWidth="2"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       fill="none"
       {...props}
     >
-      <path d="M12 2L2 7L12 12L22 7L12 2Z" />
-      <path d="M2 17L12 22L22 17" />
-      <path d="M2 12L12 17L22 12" />
-      <path 
-        className="fill-accent" 
-        d="M12 11L7 8L12 5L17 8L12 11Z" 
-        stroke="currentColor"
-      />
+      <rect width="24" height="24" rx="6" className="fill-black" />
+      <circle cx="12" cy="11" r="7" className="fill-accent" />
+      {/* Brain Paths */}
+      <path d="M9.5 4A2.5 2.5 0 0 1 12 6.5V7a2 2 0 0 1 2 2v1a2 2 0 0 1 2 2v1a2 2 0 0 1 2 2" stroke="black" />
+      <path d="M12 6.5A2.5 2.5 0 0 1 14.5 4A2.5 2.5 0 0 1 17 6.5C17 7.89 17 9.33 17 10.5C17 13.5 20 13.5 20 14" stroke="black" />
+      <path d="M12 6.5C12 9 12 12 12 14c0 1.38 2 1.5 2 3" stroke="black" />
+      <path d="M4 14c0-.5 3-1 3-3.5C7 9.33 7 7.89 7 6.5A2.5 2.5 0 0 1 9.5 4" stroke="black" />
+      <path d="M4 14c0 .5 3 1 3 3.5" stroke="black" />
+      <path d="M20 14c0 .5-3 1-3 3.5" stroke="black" />
+      <path d="M7 18c0 2.5 3 2.5 3 5" stroke="black" />
+      <path d="M17 18c0 2.5-3 2.5-3 5" stroke="black" />
+      <path d="M12 14c0 3 0 4 0 5" stroke="black" />
+      {/* Bottom diagonal stripe */}
+      <path d="M0 20L24 16V24H0V20Z" className="fill-white" />
     </svg>
   ),
   close: X,

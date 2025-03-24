@@ -67,6 +67,8 @@ export function InteractiveCalendar() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [newEvent, setNewEvent] = useState<NewEvent>({});
+  const [editEventOpen, setEditEventOpen] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   
   // Form context for better input handling
   const form = useForm({
@@ -291,6 +293,103 @@ export function InteractiveCalendar() {
     setNewEvent(prev => ({ ...prev, reminder: checked }));
   };
 
+  // Function to handle editing an event
+  const editEvent = async () => {
+    if (!user || !currentEvent || !currentEvent.id) return;
+    
+    try {
+      const eventDate = new Date(currentEvent.date);
+      
+      if (currentEvent.type === "task") {
+        // Update task with the API
+        const updatedTask = await TasksAPI.updateTask(currentEvent.id, {
+          title: currentEvent.title,
+          description: currentEvent.description || "",
+          due_date: eventDate.toISOString(),
+          status: currentEvent.status as TaskStatus,
+          priority: currentEvent.priority as TaskPriority
+        });
+        
+        // Update local state
+        setEvents(prev => prev.map(event => 
+          event.id === currentEvent.id 
+            ? {
+                id: updatedTask.id,
+                title: updatedTask.title,
+                description: updatedTask.description,
+                date: updatedTask.due_date || new Date().toISOString(),
+                type: "task",
+                status: updatedTask.status as TaskStatus,
+                priority: updatedTask.priority as TaskPriority
+              } 
+            : event
+        ));
+        
+        toast.success("Task updated successfully");
+      } else if (currentEvent.type === "journal") {
+        // Update journal with the API
+        const updatedEntry = await JournalAPI.updateEntry(currentEvent.id, {
+          title: currentEvent.title,
+          content: currentEvent.description || "",
+          mood: "neutral" // Keep the original mood or provide a way to edit it
+        });
+        
+        // Update local state
+        setEvents(prev => prev.map(event => 
+          event.id === currentEvent.id 
+            ? {
+                id: updatedEntry.id,
+                title: updatedEntry.title,
+                description: updatedEntry.content,
+                date: updatedEntry.created_at,
+                type: "journal"
+              } 
+            : event
+        ));
+        
+        toast.success("Journal entry updated successfully");
+      } else if (currentEvent.type === "note") {
+        // Update note with the API (notes are stored as tasks with low priority)
+        const updatedNote = await TasksAPI.updateTask(currentEvent.id, {
+          title: currentEvent.title,
+          description: currentEvent.description || "",
+          due_date: eventDate.toISOString(),
+          status: "todo",
+          priority: "low"
+        });
+        
+        // Update local state
+        setEvents(prev => prev.map(event => 
+          event.id === currentEvent.id 
+            ? {
+                id: updatedNote.id,
+                title: updatedNote.title,
+                description: updatedNote.description,
+                date: updatedNote.due_date || new Date().toISOString(),
+                type: "note",
+                priority: "low"
+              } 
+            : event
+        ));
+        
+        toast.success("Note updated successfully");
+      }
+      
+      // Reset form and close dialog
+      setCurrentEvent(null);
+      setEditEventOpen(false);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      toast.error(`Failed to update ${currentEvent.type}. Please try again.`);
+    }
+  };
+
+  // Function to handle click on an event
+  const handleEventClick = (event: Event) => {
+    setCurrentEvent(event);
+    setEditEventOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -391,7 +490,11 @@ export function InteractiveCalendar() {
               <ScrollArea className="h-[320px]">
                 <div className="space-y-4">
                   {selectedDateEvents.map((event) => (
-                    <div key={event.id} className="flex flex-col gap-1 pb-3 border-b">
+                    <div 
+                      key={event.id} 
+                      className="flex flex-col gap-1 pb-3 border-b cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                      onClick={() => handleEventClick(event)}
+                    >
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium">{event.title}</h4>
                         <Badge variant={getEventBadgeVariant(event.type as "task" | "journal" | "note")}>
@@ -660,6 +763,117 @@ export function InteractiveCalendar() {
             </Button>
             <Button variant="accent" onClick={createEvent}>
               Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit event dialog */}
+      <Dialog open={editEventOpen} onOpenChange={setEditEventOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit {currentEvent?.type}</DialogTitle>
+            <DialogDescription>
+              Modify your {currentEvent?.type} details
+            </DialogDescription>
+          </DialogHeader>
+          
+          {currentEvent && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={currentEvent.title}
+                  onChange={(e) => setCurrentEvent({ ...currentEvent, title: e.target.value })}
+                />
+              </div>
+              
+              {/* Date picker */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-date">Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                      id="edit-date"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {currentEvent.date ? format(new Date(currentEvent.date), "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={currentEvent.date ? new Date(currentEvent.date) : undefined}
+                      onSelect={(date) => setCurrentEvent({ ...currentEvent, date: date ? date.toISOString() : "" })}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">{currentEvent.type === "journal" ? "Journal Entry" : "Description"}</Label>
+                <Textarea
+                  id="edit-description"
+                  className={currentEvent.type === "journal" ? "min-h-[150px]" : ""}
+                  value={currentEvent.description || ""}
+                  onChange={(e) => setCurrentEvent({ ...currentEvent, description: e.target.value })}
+                />
+              </div>
+              
+              {currentEvent.type === "task" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Priority */}
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-priority">Priority</Label>
+                      <Select 
+                        value={currentEvent.priority || "medium"}
+                        onValueChange={(value) => setCurrentEvent({ ...currentEvent, priority: value as TaskPriority })}
+                      >
+                        <SelectTrigger id="edit-priority">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Status */}
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-status">Status</Label>
+                      <Select 
+                        value={currentEvent.status || "todo"}
+                        onValueChange={(value) => setCurrentEvent({ ...currentEvent, status: value as TaskStatus })}
+                      >
+                        <SelectTrigger id="edit-status">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todo">Pending</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="done">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEventOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={editEvent}>
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>

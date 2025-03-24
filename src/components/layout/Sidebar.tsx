@@ -105,7 +105,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Navigation Trigger */}
-      <div className="fixed left-4 top-3.5 z-50 flex items-center lg:hidden">
+      <div className="fixed left-4 top-3.5 z-[100] flex items-center lg:hidden">
         {/* Hamburger Menu */}
         <Button 
           variant="ghost" 
@@ -126,7 +126,7 @@ export function Sidebar() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-[300px] p-0">
           <div className="flex flex-col h-full">
-            <div className="p-6 border-b">
+            <div className="p-6 border-b sticky top-0 bg-background z-[50]">
               <h3 className="font-semibold text-lg">MindSync</h3>
             </div>
             <nav className="flex-1 overflow-y-auto p-4">
@@ -147,7 +147,7 @@ export function Sidebar() {
                 </Link>
               ))}
             </nav>
-            <div className="p-4 border-t flex justify-between items-center">
+            <div className="p-4 border-t sticky bottom-0 bg-background z-[50] flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Theme</span>
               <ThemeToggle />
             </div>
@@ -156,9 +156,9 @@ export function Sidebar() {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block lg:fixed lg:inset-y-0 lg:z-10 lg:w-[300px]">
+      <div className="hidden lg:block lg:fixed lg:inset-y-0 lg:z-[100] lg:w-[300px]">
         <div className="flex h-full flex-col border-r bg-background/60 backdrop-blur-lg">
-          <div className="p-6 border-b">
+          <div className="p-6 border-b sticky top-0 bg-background z-[50]">
             <h3 className="font-semibold text-lg">MindSync</h3>
           </div>
           <nav className="flex-1 overflow-y-auto p-4">
@@ -178,7 +178,7 @@ export function Sidebar() {
               </Link>
             ))}
           </nav>
-          <div className="p-4 border-t flex justify-between items-center">
+          <div className="p-4 border-t sticky bottom-0 bg-background z-[50] flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Theme</span>
             <ThemeToggle />
           </div>

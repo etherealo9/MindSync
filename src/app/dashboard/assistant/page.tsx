@@ -33,7 +33,7 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(true);
-  const [aiProvider, setAIProvider] = useState<AIProvider>("openai");
+  const [aiProvider, setAIProvider] = useState<AIProvider>("groq");
   const [currentProvider, setCurrentProvider] = useState<AIProvider | undefined>();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,19 +100,37 @@ export default function AssistantPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">AI Assistant</h1>
-        
-        {!isConfigured && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Configuration Error</AlertTitle>
-            <AlertDescription>
-              {aiProvider === 'openai' 
-                ? "The OpenAI API key is missing or invalid. Please add OPENAI_API_KEY to your .env.local file."
-                : "The HuggingFace API key is missing or invalid. Please add HUGGINGFACE_API_KEY to your .env.local file."}
-            </AlertDescription>
-          </Alert>
-        )}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold tracking-tight">AI Assistant</h1>
+            <div className="flex gap-2">
+              <Select
+                value={aiProvider}
+                onValueChange={(value) => setAIProvider(value as AIProvider)}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Select Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="groq">Groq</SelectItem>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="huggingface">HuggingFace</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {!isConfigured && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                The AI assistant is not properly configured. Please check your API keys in the environment variables.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
         
         <Card className="mb-6">
           <CardHeader>
@@ -120,21 +138,6 @@ export default function AssistantPage() {
             <CardDescription>
               Ask me about task management, journaling tips, productivity advice, or anything else!
             </CardDescription>
-            <div className="flex items-center mt-2">
-              <span className="text-sm mr-2">AI Provider:</span>
-              <Select 
-                value={aiProvider} 
-                onValueChange={(value) => setAIProvider(value as AIProvider)}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Select Provider" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="huggingface">HuggingFace</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </CardHeader>
           
           <CardContent>
@@ -161,7 +164,10 @@ export default function AssistantPage() {
                         {message.role === "user" ? "You" : "Assistant"}
                         {index > 0 && index % 2 === 1 && currentProvider && (
                           <span className="text-xs ml-2 text-gray-500">
-                            via {currentProvider === 'openai' ? 'OpenAI' : 'HuggingFace'}
+                            via {
+                              currentProvider === 'openai' ? 'OpenAI' : 
+                              currentProvider === 'groq' ? 'Groq' : 'HuggingFace'
+                            }
                           </span>
                         )}
                       </div>
@@ -184,7 +190,10 @@ export default function AssistantPage() {
           <CardFooter>
             <form onSubmit={handleSubmit} className="w-full space-y-2">
               <Textarea
-                placeholder={isConfigured ? "Type your message here..." : `${aiProvider === 'openai' ? 'OpenAI' : 'HuggingFace'} AI Assistant unavailable - API key missing`}
+                placeholder={isConfigured ? "Type your message here..." : `${
+                  aiProvider === 'openai' ? 'OpenAI' : 
+                  aiProvider === 'groq' ? 'Groq' : 'HuggingFace'
+                } AI Assistant unavailable - API key missing`}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="w-full resize-none"

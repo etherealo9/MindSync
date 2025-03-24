@@ -56,7 +56,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar />
         <div className="flex-1 flex flex-col lg:ml-[300px]">
           <Header />
-          <main className="flex-1 overflow-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-20 lg:pb-8">
+          <main className="flex-1 overflow-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-24 lg:pb-8">
             <div className="mx-auto max-w-6xl w-full">
               {children}
             </div>
