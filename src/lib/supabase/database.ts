@@ -1,4 +1,5 @@
 import { supabase } from './client';
+export { RoutinesAPI } from './routines-api';
 
 // Types for database tables
 export type Task = {
@@ -52,6 +53,24 @@ export type GoogleCalendarAuth = {
   refresh_token: string;
   token_type: string;
   expiry_date: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Routine = {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  schedule: {
+    days: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[];
+    time?: string;
+  };
+  tasks: {
+    title: string;
+    completed: boolean;
+    order: number;
+  }[];
   created_at: string;
   updated_at: string;
 };

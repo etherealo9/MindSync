@@ -85,44 +85,56 @@ export default function Home() {
                         <span className="bg-foreground text-background px-3 py-1">Mind</span>
                         <span>Sync</span>
                       </div>
-                      <span className="text-xl sm:text-2xl md:text-3xl font-medium block mt-3 normal-case text-foreground/80">Your thoughts, organized.</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl font-medium block mt-3 normal-case text-foreground/80">Transform Your Productivity with AI and Open-Source </span>
                     </h1>
                   </div>
                   <p className="text-lg md:text-xl font-medium max-w-[600px] text-foreground/80 leading-relaxed">
-                    Organize your thoughts, manage tasks, and reflect on your journey with powerful AI assistance.
+                    Experience a revolutionary way to organize tasks, journal thoughts, and achieve personal growth. Trusted by 1000+ developers worldwide for its privacy-first approach and powerful AI assistance.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 pt-2">
                     <Link href="/dashboard" prefetch={false}>
                       <Button size="lg" className="neo-button w-full sm:w-auto px-6 py-5 text-base">
-                        Get Started
+                        Start Free - No Credit Card
                         <Icons.arrowRight className="ml-2 h-5 w-5" />
                       </Button>
                     </Link>
                     <Link href="https://github.com/etherealo9/MindSync" prefetch={false}>
                       <Button variant="outline" size="lg" className="w-full sm:w-auto border-2 px-6 py-5 text-base">
                         <Icons.github className="mr-2 h-5 w-5" />
-                        Star on GitHub
+                        Start With Github For Devs
                       </Button>
                     </Link>
                   </div>
-                  <div className="flex flex-wrap gap-4 pt-2 text-sm text-foreground/70">
+                  <div className="flex flex-wrap gap-4 pt-4 text-sm text-foreground/70">
                     <div className="flex items-center gap-2">
                       <div className="bg-green-500/20 p-1 rounded-full">
                         <Icons.check className="h-3 w-3 text-green-600" />
                       </div>
-                      <span>Free & Open Source</span>
+                      <span>100% Free & Open Source</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-green-500/20 p-1 rounded-full">
                         <Icons.check className="h-3 w-3 text-green-600" />
                       </div>
-                      <span>Your Data, Your Control</span>
+                      <span>End-to-End Privacy</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-green-500/20 p-1 rounded-full">
                         <Icons.check className="h-3 w-3 text-green-600" />
                       </div>
-                      <span>Mobile-first Design</span>
+                      <span>5-Minute Setup</span>
+                    </div>
+                  </div>
+                  <div className="mt-8 p-4 bg-accent/10 rounded-lg border-2 border-black/10 dark:border-white/10">
+                    <div className="flex items-center gap-4">
+                      <div className="flex -space-x-4">
+                        <img className="w-8 h-8 rounded-full border-2 border-white" src="https://avatars.githubusercontent.com/u/1?v=4" alt="User" />
+                        <img className="w-8 h-8 rounded-full border-2 border-white" src="https://avatars.githubusercontent.com/u/2?v=4" alt="User" />
+                        <img className="w-8 h-8 rounded-full border-2 border-white" src="https://avatars.githubusercontent.com/u/3?v=4" alt="User" />
+                      </div>
+                      <p className="text-sm font-medium">
+                        Joined by <span className="text-accent-foreground font-bold">1,000+</span> developers who upgraded their productivity this month
+                      </p>
                     </div>
                   </div>
                 </div>

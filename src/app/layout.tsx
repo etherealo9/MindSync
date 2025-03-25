@@ -69,6 +69,7 @@ export default function RootLayout({
             </ClientProviders>
           </AuthProvider>
         </ThemeProvider>
+        <div id="pwa-root" />
       </body>
     </html>
   );

@@ -32,7 +32,6 @@ export default function SignIn() {
   const router = useRouter();
   const { user, session, isLoading: authLoading, forceRedirectToDashboard } = useAuth();
   const redirectAttempted = useRef(false);
-  const [debugInfo, setDebugInfo] = useState<string>("");
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Force redirect if we're still on the sign-in page after a certain time
@@ -55,25 +54,6 @@ export default function SignIn() {
       }
     };
   }, [session]);
-
-  // Debug the auth state (but limit refreshes)
-  useEffect(() => {
-    // Only update debug info if something changed
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const debugMessage = `
-      Current URL: ${currentUrl}
-      Auth Loading: ${authLoading}
-      Session: ${session ? 'Yes' : 'No'}
-      User: ${user ? user.email : 'None'}
-      Redirect Attempted: ${redirectAttempted.current}
-    `;
-    
-    console.log("SignIn Debug:", debugMessage);
-    setDebugInfo(debugMessage);
-    
-    // Clear any redirect_count cookie that might be causing issues
-    document.cookie = "redirect_count=0; path=/;";
-  }, [authLoading, session, user]);
 
   // If user is already authenticated, redirect to dashboard
   useEffect(() => {
@@ -159,25 +139,6 @@ export default function SignIn() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      {/* Debug info display */}
-      {debugInfo && (
-        <div className="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded w-full max-w-md whitespace-pre-wrap">
-          <h3 className="font-bold">Debug Information</h3>
-          <pre className="text-xs">{debugInfo}</pre>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2"
-            onClick={() => {
-              // Use the robust redirect method
-              forceRedirectToDashboard();
-            }}
-          >
-            Force Dashboard Redirect
-          </Button>
-        </div>
-      )}
-      
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Sign In</CardTitle>

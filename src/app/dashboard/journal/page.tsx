@@ -16,13 +16,15 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, Plus, X, Edit, Trash2 } from "lucide-react";
 import { LineChartComponent, PieChartComponent, AreaChartComponent } from "@/components/charts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { JournalAPI, JournalEntry as SupabaseJournalEntry } from "@/lib/supabase/database";
+import { JournalAPI, JournalEntry as SupabaseJournalEntry, RoutinesAPI, Routine } from "@/lib/supabase/database";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "sonner";
 import AssistantHelper from "@/components/ai/AssistantHelper";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Local journal entry type definition
 type JournalEntry = {
@@ -49,15 +51,37 @@ const mapJournalEntry = (entry: SupabaseJournalEntry): JournalEntry => {
 export default function JournalPage() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [showAIHelper, setShowAIHelper] = useState(false);
   const [editEntryOpen, setEditEntryOpen] = useState(false);
+  const [newRoutineOpen, setNewRoutineOpen] = useState(false);
+  const [editRoutineOpen, setEditRoutineOpen] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
 
   const [newEntryTitle, setNewEntryTitle] = useState("");
   const [newEntryContent, setNewEntryContent] = useState("");
   const [newEntryMood, setNewEntryMood] = useState<"happy" | "neutral" | "sad">("neutral");
   const [newEntryTags, setNewEntryTags] = useState<string>("");
+
+  const [newRoutine, setNewRoutine] = useState<{
+    title: string;
+    description: string;
+    schedule: {
+      days: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[];
+      time?: string;
+    };
+    tasks: { title: string; completed: boolean; order: number; }[];
+  }>({
+    title: "",
+    description: "",
+    schedule: {
+      days: [],
+      time: "09:00"
+    },
+    tasks: []
+  });
 
   // Sample data for journal analytics
   const moodTrendData = Array.from({ length: 14 }).map((_, i) => {
@@ -104,6 +128,23 @@ export default function JournalPage() {
     fetchEntries();
   }, [user]);
 
+  // Fetch routines
+  useEffect(() => {
+    const fetchRoutines = async () => {
+      if (!user) return;
+      
+      try {
+        const userRoutines = await RoutinesAPI.getRoutines(user.id);
+        setRoutines(userRoutines);
+      } catch (error) {
+        console.error("Error fetching routines:", error);
+        toast.error("Failed to load routines");
+      }
+    };
+
+    fetchRoutines();
+  }, [user]);
+
   // Add new journal entry
   const addEntry = async () => {
     if (!user || newEntryTitle.trim() === "" || newEntryContent.trim() === "") return;
@@ -132,6 +173,84 @@ export default function JournalPage() {
     } catch (error) {
       console.error("Error creating journal entry:", error);
       toast.error("Failed to create journal entry");
+    }
+  };
+
+  // Add new routine
+  const addRoutine = async () => {
+    if (!user || !newRoutine.title) return;
+    
+    try {
+      const createdRoutine = await RoutinesAPI.createRoutine({
+        user_id: user.id,
+        ...newRoutine
+      });
+      
+      setRoutines([createdRoutine, ...routines]);
+      setNewRoutineOpen(false);
+      setNewRoutine({
+        title: "",
+        description: "",
+        schedule: {
+          days: [],
+          time: "09:00"
+        },
+        tasks: []
+      });
+      toast.success("Routine created successfully");
+    } catch (error) {
+      console.error("Error creating routine:", error);
+      toast.error("Failed to create routine");
+    }
+  };
+
+  // Update routine
+  const updateRoutine = async () => {
+    if (!selectedRoutine) return;
+    
+    try {
+      const updatedRoutine = await RoutinesAPI.updateRoutine(selectedRoutine.id, selectedRoutine);
+      setRoutines(routines.map(r => r.id === updatedRoutine.id ? updatedRoutine : r));
+      setEditRoutineOpen(false);
+      toast.success("Routine updated successfully");
+    } catch (error) {
+      console.error("Error updating routine:", error);
+      toast.error("Failed to update routine");
+    }
+  };
+
+  // Delete routine
+  const deleteRoutine = async (routineId: string) => {
+    try {
+      await RoutinesAPI.deleteRoutine(routineId);
+      setRoutines(routines.filter(r => r.id !== routineId));
+      toast.success("Routine deleted successfully");
+    } catch (error) {
+      console.error("Error deleting routine:", error);
+      toast.error("Failed to delete routine");
+    }
+  };
+
+  // Toggle task completion
+  const toggleTask = async (routineId: string, taskIndex: number) => {
+    const routine = routines.find(r => r.id === routineId);
+    if (!routine) return;
+
+    const updatedTasks = [...routine.tasks];
+    updatedTasks[taskIndex] = {
+      ...updatedTasks[taskIndex],
+      completed: !updatedTasks[taskIndex].completed
+    };
+
+    try {
+      const updatedRoutine = await RoutinesAPI.updateRoutine(routineId, {
+        ...routine,
+        tasks: updatedTasks
+      });
+      setRoutines(routines.map(r => r.id === routineId ? updatedRoutine : r));
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("Failed to update task");
     }
   };
 
@@ -291,155 +410,155 @@ export default function JournalPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-        <h2 className="text-2xl font-bold">Journal</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>New Journal Entry</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>Create New Journal Entry</DialogTitle>
-              <DialogDescription>
-                Document your thoughts, experiences, and reflections to track your journey and personal growth.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="entry-title">Entry Title</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Give your journal entry a meaningful title that summarizes the main topic.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input
-                  id="entry-title"
-                  placeholder="E.g., 'Morning Reflection' or 'Project Milestone'"
-                  value={newEntryTitle}
-                  onChange={(e) => setNewEntryTitle(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">A clear title helps you find this entry later.</p>
-              </div>
-              
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="entry-content">Journal Content</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Write freely about your thoughts, experiences, challenges, or achievements.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <textarea
-                  className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id="entry-content"
-                  placeholder="Detail your thoughts, experiences, or reflections here... What happened today? How did you feel about it? What did you learn?"
-                  value={newEntryContent}
-                  onChange={(e) => setNewEntryContent(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">Be honest and detailed - this is your personal space for reflection.</p>
-              </div>
-              
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="entry-tags">Tags</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Add comma-separated tags to categorize and easily find your entries later.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input
-                  id="entry-tags"
-                  placeholder="work, personal, idea, health, goal (comma-separated)"
-                  value={newEntryTags}
-                  onChange={(e) => setNewEntryTags(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">Tags help organize entries and identify patterns in your journaling.</p>
-              </div>
-              
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label>Emotional State</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Select the mood that best represents your emotional state for this entry.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant={newEntryMood === "happy" ? "default" : "outline"}
-                    onClick={() => setNewEntryMood("happy")}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    {getMoodIcon("happy")} Positive
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newEntryMood === "neutral" ? "default" : "outline"}
-                    onClick={() => setNewEntryMood("neutral")}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    {getMoodIcon("neutral")} Neutral
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newEntryMood === "sad" ? "default" : "outline"}
-                    onClick={() => setNewEntryMood("sad")}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    {getMoodIcon("sad")} Challenging
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">Tracking your mood helps identify emotional patterns over time.</p>
-              </div>
-            </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <DialogClose asChild>
-                <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
-              </DialogClose>
-              <DialogClose asChild>
-                <Button onClick={addEntry} className="w-full sm:w-auto">Create Entry</Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Journal and Insights Tabs */}
-      <Tabs defaultValue="journal" className="w-full">
+    <div className="container mx-auto p-4 space-y-4">
+      <Tabs defaultValue="entries" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="journal">Journal Entries</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
+          <TabsTrigger value="entries">Journal Entries</TabsTrigger>
+          <TabsTrigger value="routines">My Routines</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
-        
-        {/* Journal Entries Tab Content */}
-        <TabsContent value="journal" className="space-y-6">
+
+        {/* Journal Entries Tab */}
+        <TabsContent value="entries" className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
+            <h2 className="text-2xl font-bold">Journal</h2>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>New Journal Entry</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[525px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Journal Entry</DialogTitle>
+                  <DialogDescription>
+                    Document your thoughts, experiences, and reflections to track your journey and personal growth.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="entry-title">Entry Title</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Give your journal entry a meaningful title that summarizes the main topic.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Input
+                      id="entry-title"
+                      placeholder="E.g., 'Morning Reflection' or 'Project Milestone'"
+                      value={newEntryTitle}
+                      onChange={(e) => setNewEntryTitle(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">A clear title helps you find this entry later.</p>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="entry-content">Journal Content</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Write freely about your thoughts, experiences, challenges, or achievements.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <textarea
+                      className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      id="entry-content"
+                      placeholder="Detail your thoughts, experiences, or reflections here... What happened today? How did you feel about it? What did you learn?"
+                      value={newEntryContent}
+                      onChange={(e) => setNewEntryContent(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Be honest and detailed - this is your personal space for reflection.</p>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="entry-tags">Tags</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Add comma-separated tags to categorize and easily find your entries later.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Input
+                      id="entry-tags"
+                      placeholder="work, personal, idea, health, goal (comma-separated)"
+                      value={newEntryTags}
+                      onChange={(e) => setNewEntryTags(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Tags help organize entries and identify patterns in your journaling.</p>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Label>Emotional State</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Select the mood that best represents your emotional state for this entry.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <Button
+                        type="button"
+                        variant={newEntryMood === "happy" ? "default" : "outline"}
+                        onClick={() => setNewEntryMood("happy")}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        {getMoodIcon("happy")} Positive
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={newEntryMood === "neutral" ? "default" : "outline"}
+                        onClick={() => setNewEntryMood("neutral")}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        {getMoodIcon("neutral")} Neutral
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={newEntryMood === "sad" ? "default" : "outline"}
+                        onClick={() => setNewEntryMood("sad")}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        {getMoodIcon("sad")} Challenging
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Tracking your mood helps identify emotional patterns over time.</p>
+                  </div>
+                </div>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                  <DialogClose asChild>
+                    <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={addEntry} className="w-full sm:w-auto">Create Entry</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
           <div className="space-y-4">
             {entries.map((entry) => (
               <Card key={entry.id} className="cursor-pointer hover:bg-accent/10 transition-colors" onClick={() => handleEntryClick(entry)}>
@@ -481,9 +600,281 @@ export default function JournalPage() {
             ))}
           </div>
         </TabsContent>
-        
-        {/* Insights Tab Content */}
-        <TabsContent value="insights" className="space-y-6">
+
+        {/* Routines Tab */}
+        <TabsContent value="routines" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">My Daily Routines</h2>
+            <Dialog open={newRoutineOpen} onOpenChange={setNewRoutineOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Routine
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Routine</DialogTitle>
+                  <DialogDescription>Create a new daily routine to help structure your day</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Title</Label>
+                    <Input
+                      value={newRoutine.title}
+                      onChange={(e) => setNewRoutine({ ...newRoutine, title: e.target.value })}
+                      placeholder="Morning Routine"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Input
+                      value={newRoutine.description}
+                      onChange={(e) => setNewRoutine({ ...newRoutine, description: e.target.value })}
+                      placeholder="My morning productivity routine"
+                    />
+                  </div>
+                  <div>
+                    <Label>Schedule Days</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                        <Button
+                          key={day}
+                          variant={newRoutine.schedule.days.includes(day as any) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            const days = newRoutine.schedule.days.includes(day as any)
+                              ? newRoutine.schedule.days.filter(d => d !== day)
+                              : [...newRoutine.schedule.days, day];
+                            setNewRoutine({
+                              ...newRoutine,
+                              schedule: { ...newRoutine.schedule, days: days as any[] }
+                            });
+                          }}
+                        >
+                          {day.charAt(0).toUpperCase() + day.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Time</Label>
+                    <Input
+                      type="time"
+                      value={newRoutine.schedule.time}
+                      onChange={(e) => setNewRoutine({
+                        ...newRoutine,
+                        schedule: { ...newRoutine.schedule, time: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Tasks</Label>
+                    <div className="space-y-2">
+                      {newRoutine.tasks.map((task, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            value={task.title}
+                            onChange={(e) => {
+                              const tasks = [...newRoutine.tasks];
+                              tasks[index] = { ...task, title: e.target.value };
+                              setNewRoutine({ ...newRoutine, tasks });
+                            }}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const tasks = newRoutine.tasks.filter((_, i) => i !== index);
+                              setNewRoutine({ ...newRoutine, tasks });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setNewRoutine({
+                            ...newRoutine,
+                            tasks: [...newRoutine.tasks, { title: "", completed: false, order: newRoutine.tasks.length }]
+                          });
+                        }}
+                      >
+                        Add Task
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setNewRoutineOpen(false)}>Cancel</Button>
+                  <Button onClick={addRoutine}>Create Routine</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {routines.map((routine) => (
+              <Card key={routine.id} className="relative">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle>{routine.title}</CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedRoutine(routine);
+                          setEditRoutineOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteRoutine(routine.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <CardDescription>
+                    {routine.description}
+                    <div className="mt-1 text-sm">
+                      {routine.schedule.time && `${routine.schedule.time} - `}
+                      {routine.schedule.days.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(", ")}
+                    </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {routine.tasks.map((task, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={task.completed}
+                          onCheckedChange={() => toggleTask(routine.id, index)}
+                        />
+                        <span className={task.completed ? "line-through text-muted-foreground" : ""}>
+                          {task.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Edit Routine Dialog */}
+          <Dialog open={editRoutineOpen} onOpenChange={setEditRoutineOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Routine</DialogTitle>
+                <DialogDescription>Modify your daily routine</DialogDescription>
+              </DialogHeader>
+              {selectedRoutine && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Title</Label>
+                    <Input
+                      value={selectedRoutine.title}
+                      onChange={(e) => setSelectedRoutine({ ...selectedRoutine, title: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Input
+                      value={selectedRoutine.description}
+                      onChange={(e) => setSelectedRoutine({ ...selectedRoutine, description: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Schedule Days</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                        <Button
+                          key={day}
+                          variant={selectedRoutine.schedule.days.includes(day as any) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            const days = selectedRoutine.schedule.days.includes(day as any)
+                              ? selectedRoutine.schedule.days.filter(d => d !== day)
+                              : [...selectedRoutine.schedule.days, day];
+                            setSelectedRoutine({
+                              ...selectedRoutine,
+                              schedule: { ...selectedRoutine.schedule, days: days as any[] }
+                            });
+                          }}
+                        >
+                          {day.charAt(0).toUpperCase() + day.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Time</Label>
+                    <Input
+                      type="time"
+                      value={selectedRoutine.schedule.time}
+                      onChange={(e) => setSelectedRoutine({
+                        ...selectedRoutine,
+                        schedule: { ...selectedRoutine.schedule, time: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Tasks</Label>
+                    <div className="space-y-2">
+                      {selectedRoutine.tasks.map((task, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            value={task.title}
+                            onChange={(e) => {
+                              const tasks = [...selectedRoutine.tasks];
+                              tasks[index] = { ...task, title: e.target.value };
+                              setSelectedRoutine({ ...selectedRoutine, tasks });
+                            }}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const tasks = selectedRoutine.tasks.filter((_, i) => i !== index);
+                              setSelectedRoutine({ ...selectedRoutine, tasks });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedRoutine({
+                            ...selectedRoutine,
+                            tasks: [...selectedRoutine.tasks, { title: "", completed: false, order: selectedRoutine.tasks.length }]
+                          });
+                        }}
+                      >
+                        Add Task
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditRoutineOpen(false)}>Cancel</Button>
+                <Button onClick={updateRoutine}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
             <Card>
               <CardHeader className="pb-2">
