@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger, 
+  SheetTitle,
+  SheetDescription,
+  SheetHeader 
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -126,9 +133,12 @@ export function Sidebar() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-[300px] p-0 z-[9991]">
           <div className="flex flex-col h-full">
-            <div className="p-6 border-b sticky top-0 bg-background z-[50]">
-              <h3 className="font-semibold text-lg">MindSync</h3>
-            </div>
+            <SheetHeader className="p-6 border-b sticky top-0 bg-background z-[50]">
+              <SheetTitle>MindSync</SheetTitle>
+              <SheetDescription>
+                Your personal productivity and reflection companion
+              </SheetDescription>
+            </SheetHeader>
             <nav className="flex-1 overflow-y-auto p-4">
               {navItems.map((item) => (
                 <Link

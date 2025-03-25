@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Icons } from '@/components/ui/icons';
 
 interface SplashScreenProps {
   onFinished?: () => void;
@@ -37,14 +38,14 @@ export function PwaSplashScreen({
       <div className="flex flex-col items-center justify-center">
         {/* App logo with pulsing animation */}
         <motion.div
-          className="flex items-center justify-center p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 shadow-lg mb-8"
+          className="flex items-center justify-center p-4 rounded-2xl bg-black dark:bg-white shadow-lg mb-8"
           initial={{ scale: 0.8 }}
           animate={{ 
             scale: [0.8, 1, 0.8],
             boxShadow: [
-              '0 4px 6px rgba(59, 130, 246, 0.5)',
-              '0 8px 24px rgba(59, 130, 246, 0.7)',
-              '0 4px 6px rgba(59, 130, 246, 0.5)'
+              '0 4px 6px rgba(0, 0, 0, 0.5)',
+              '0 8px 24px rgba(0, 0, 0, 0.7)',
+              '0 4px 6px rgba(0, 0, 0, 0.5)'
             ]
           }}
           transition={{ 
@@ -53,35 +54,12 @@ export function PwaSplashScreen({
             repeatType: "loop" 
           }}
         >
-          {/* Brain icon in white */}
-          <svg
-            width="80"
-            height="80"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-white"
-          >
-            <path
-              d="M16 10C16 13.3137 13.3137 16 10 16C6.68629 16 4 13.3137 4 10C4 6.68629 6.68629 4 10 4C13.3137 4 16 6.68629 16 10Z"
-              fill="currentColor"
-            />
-            <path
-              d="M20 18C20 19.1046 19.1046 20 18 20C16.8954 20 16 19.1046 16 18C16 16.8954 16.8954 16 18 16C19.1046 16 20 16.8954 20 18Z"
-              fill="currentColor"
-            />
-            <path
-              d="M10 16C6.68629 16 4 13.3137 4 10C4 6.68629 6.68629 4 10 4"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
+          <Icons.logo className="h-20 w-20 text-accent" />
         </motion.div>
 
         {/* App name with fade-in */}
         <motion.h1
-          className="text-3xl font-bold mb-2 tracking-tight"
+          className="text-3xl font-bold mb-2 tracking-tight uppercase"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
@@ -109,7 +87,7 @@ export function PwaSplashScreen({
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="h-3 w-3 rounded-full bg-primary"
+              className="h-3 w-3 rounded-full bg-accent"
               animate={{ scale: [1, 1.5, 1] }}
               transition={{
                 duration: 1,

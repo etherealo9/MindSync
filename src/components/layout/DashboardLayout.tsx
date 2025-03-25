@@ -51,18 +51,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <NotificationProvider>
-      <div className="flex min-h-screen flex-col">
-        <Sidebar />
-        <Header />
-        <main className="flex-1 pb-20 lg:pb-8 lg:pl-[300px] pt-14">
-          <div className="container mx-auto p-4 md:p-6 lg:p-8">
-            {children}
+      <div className="relative min-h-screen">
+        <div className="flex h-screen overflow-hidden bg-background">
+          <Sidebar />
+          <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-y-auto lg:pl-[300px]">
+              <div className="container mx-auto p-4 md:p-6 lg:p-8 pb-24">
+                {children}
+              </div>
+            </main>
           </div>
-        </main>
+        </div>
+        <BottomNav />
+        <Toaster />
+        <AssistantBubble />
       </div>
-      <BottomNav />
-      <Toaster />
-      <AssistantBubble />
     </NotificationProvider>
   );
 } 

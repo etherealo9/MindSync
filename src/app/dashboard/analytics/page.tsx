@@ -56,7 +56,7 @@ const journalTopicsData = [
 
 export default function AnalyticsPage() {
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground">
@@ -64,8 +64,8 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="overview" className="w-full space-y-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="journaling">Journaling</TabsTrigger>
@@ -73,7 +73,7 @@ export default function AnalyticsPage() {
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
@@ -183,8 +183,8 @@ export default function AnalyticsPage() {
             </Card>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <div className="col-span-4">
+          <div className="grid gap-4 mt-4">
+            <div className="col-span-1">
               <AreaChartComponent
                 title="Productivity Overview"
                 description="Your productivity metrics for the past 30 days"
@@ -195,7 +195,7 @@ export default function AnalyticsPage() {
                 height={300}
               />
             </div>
-            <div className="col-span-3">
+            <div className="col-span-1">
               <PieChartComponent
                 title="Top Focus Areas"
                 description="Categories you spend most time on"
@@ -210,8 +210,8 @@ export default function AnalyticsPage() {
         </TabsContent>
 
         <TabsContent value="tasks">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="col-span-2">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+            <div className="col-span-1 lg:col-span-2">
               <BarChartComponent
                 title="Task Completion Trend"
                 description="Weekly task completion statistics"
@@ -222,7 +222,7 @@ export default function AnalyticsPage() {
                 height={300}
               />
             </div>
-            <div>
+            <div className="col-span-1">
               <PieChartComponent
                 title="Task Priority Distribution"
                 description="Breakdown of task priorities"
@@ -231,7 +231,7 @@ export default function AnalyticsPage() {
                 height={300}
               />
             </div>
-            <div className="col-span-3">
+            <div className="col-span-1 lg:col-span-3">
               <LineChartComponent
                 title="Task Completion Rate Over Time"
                 description="Monthly completion rate trends"
@@ -248,8 +248,8 @@ export default function AnalyticsPage() {
         </TabsContent>
 
         <TabsContent value="journaling">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="col-span-2">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+            <div className="col-span-1 lg:col-span-2">
               <LineChartComponent
                 title="Journaling Consistency"
                 description="Daily entries over the last 30 days"
@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
                 height={300}
               />
             </div>
-            <div>
+            <div className="col-span-1">
               <Card>
                 <CardHeader>
                   <CardTitle>Mood Distribution</CardTitle>
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
                     Journal entry sentiment analysis
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-2">
                   <PieChartComponent
                     title=""
                     data={moodDistributionData}
@@ -284,7 +284,7 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
             </div>
-            <div className="col-span-3">
+            <div className="col-span-1 lg:col-span-3">
               <PieChartComponent
                 title="Journal Topics"
                 description="Distribution of journal entry topics"

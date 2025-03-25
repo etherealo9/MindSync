@@ -1,7 +1,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { createPortal } from "react-dom";
 
 const bottomNavItems = [
   {
@@ -52,29 +52,31 @@ const bottomNavItems = [
 export function BottomNav() {
   const pathname = usePathname();
   
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full h-16 bg-background/95 backdrop-blur-lg border-t shadow-md z-[9999] lg:hidden">
-      <div className="grid h-full grid-cols-5 mx-auto max-w-md">
+  const nav = (
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md h-16 z-50 rounded-full border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 block lg:hidden">
+      <div className="grid h-full grid-cols-4 mx-auto">
         {bottomNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 text-xs transition-colors",
+              "flex flex-col items-center justify-center gap-1 text-xs transition-colors relative",
               pathname === item.href
-                ? "text-primary"
+                ? "text-primary after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-primary"
                 : "text-muted-foreground hover:text-primary"
             )}
           >
             {item.icon}
-            <span>{item.title}</span>
+            <span className="sr-only">{item.title}</span>
           </Link>
         ))}
-        <div className="flex flex-col items-center justify-center">
-          <ThemeToggle />
-          <span className="text-xs mt-1">Theme</span>
-        </div>
       </div>
     </nav>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(nav, document.body);
+  }
+
+  return null;
 } 

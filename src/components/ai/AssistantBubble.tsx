@@ -393,6 +393,21 @@ export default function AssistantBubble() {
     } catch (error: any) {
       toast.error("Failed to get AI response. Please try again.");
       console.error("AI response error:", error);
+      
+      // Add helpful message for PWA users
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                     (window.navigator as any).standalone ||
+                     document.referrer.includes('android-app://');
+      
+      if (isPWA) {
+        // Add specific error message for PWA users
+        const errorMessage: AIMessage = {
+          role: "system",
+          content: "Network error in PWA mode. Your task was created, but I couldn't retrieve the full response. You might need to refresh the app or try again later.",
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+      
       setIsConfigured(false);
     } finally {
       setIsLoading(false);

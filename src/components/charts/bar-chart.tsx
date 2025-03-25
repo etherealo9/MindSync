@@ -33,14 +33,14 @@ export function BarChartComponent({
         <CardTitle>{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0 sm:p-6">
         <ResponsiveContainer width="100%" height={height}>
-          <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
             <XAxis 
               dataKey={xAxisKey} 
               className="text-xs font-medium text-muted-foreground" 
-              tick={{ fill: 'currentColor' }}
+              tick={{ fill: 'currentColor', angle: -45, textAnchor: 'end', dy: 10 }}
               tickLine={{ stroke: 'currentColor' }}
             />
             <YAxis 
@@ -67,6 +67,8 @@ export function BarChartComponent({
                 paddingTop: '10px',
                 fontSize: '12px'
               }}
+              align="center"
+              verticalAlign="bottom"
             />
             {categories.map((category, index) => (
               <Bar 

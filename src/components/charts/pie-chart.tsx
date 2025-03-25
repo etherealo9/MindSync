@@ -36,20 +36,22 @@ export function PieChartComponent({
         <CardTitle>{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="flex justify-center">
+      <CardContent className="p-0 sm:p-6">
         <ResponsiveContainer width="100%" height={height}>
-          <PieChart>
+          <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
               labelLine={false}
-              outerRadius={outerRadius}
-              innerRadius={innerRadius}
+              outerRadius={Math.min(outerRadius, height / 3)}
+              innerRadius={Math.min(innerRadius, height / 4)}
               paddingAngle={innerRadius > 0 ? 5 : 0}
               dataKey="value"
               nameKey="name"
-              label={({ name, percent }: PieLabel) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }: PieLabel) => 
+                window.innerWidth > 640 ? `${name}: ${(percent * 100).toFixed(0)}%` : `${(percent * 100).toFixed(0)}%`
+              }
             >
               {data.map((entry, index) => (
                 <Cell 

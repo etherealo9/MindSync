@@ -52,8 +52,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle API requests differently (don't cache)
+  // Handle API requests differently (don't cache but still fetch)
   if (event.request.url.includes('/api/')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
