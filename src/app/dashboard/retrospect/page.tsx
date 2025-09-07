@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "lucide-react";
 import { format, parseISO, subMonths, startOfMonth, addDays } from "date-fns";
 import { LineChartComponent, BarChartComponent, AreaChartComponent } from "@/components/charts";
+import { DocumentEditor } from "@/components/document-editor/DocumentEditor";
 
 // Define the type for productivity data
 type ProductivityData = {
@@ -364,16 +365,16 @@ export default function RetrospectPage() {
                   <TabsTrigger value="improvements">Improvements</TabsTrigger>
                 </TabsList>
                 <TabsContent value="wins" className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      placeholder="Add a win"
+                  <div className="space-y-2">
+                    <DocumentEditor
                       value={newWin}
-                      onChange={(e) => setNewWin(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addWin()}
-                      className="flex-1"
+                      onChange={(content) => setNewWin(content)}
+                      placeholder="Describe a win or achievement... Type '/' for commands"
+                      minHeight="80px"
+                      compact={true}
                     />
-                    <Button type="button" onClick={addWin} className="mt-2 sm:mt-0">
-                      Add
+                    <Button type="button" onClick={addWin} className="w-full">
+                      Add Win
                     </Button>
                   </div>
                   <ul className="list-disc list-inside space-y-1">
@@ -385,16 +386,16 @@ export default function RetrospectPage() {
                   </ul>
                 </TabsContent>
                 <TabsContent value="challenges" className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      placeholder="Add a challenge"
+                  <div className="space-y-2">
+                    <DocumentEditor
                       value={newChallenge}
-                      onChange={(e) => setNewChallenge(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addChallenge()}
-                      className="flex-1"
+                      onChange={(content) => setNewChallenge(content)}
+                      placeholder="Describe a challenge or obstacle... Type '/' for commands"
+                      minHeight="80px"
+                      compact={true}
                     />
-                    <Button type="button" onClick={addChallenge} className="mt-2 sm:mt-0">
-                      Add
+                    <Button type="button" onClick={addChallenge} className="w-full">
+                      Add Challenge
                     </Button>
                   </div>
                   <ul className="list-disc list-inside space-y-1">
@@ -406,16 +407,16 @@ export default function RetrospectPage() {
                   </ul>
                 </TabsContent>
                 <TabsContent value="improvements" className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      placeholder="Add an improvement"
+                  <div className="space-y-2">
+                    <DocumentEditor
                       value={newImprovement}
-                      onChange={(e) => setNewImprovement(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addImprovement()}
-                      className="flex-1"
+                      onChange={(content) => setNewImprovement(content)}
+                      placeholder="Describe an improvement or action item... Type '/' for commands"
+                      minHeight="80px"
+                      compact={true}
                     />
-                    <Button type="button" onClick={addImprovement} className="mt-2 sm:mt-0">
-                      Add
+                    <Button type="button" onClick={addImprovement} className="w-full">
+                      Add Improvement
                     </Button>
                   </div>
                   <ul className="list-disc list-inside space-y-1">

@@ -34,6 +34,7 @@ import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "sonner";
 import AssistantHelper from "@/components/ai/AssistantHelper";
 import { Textarea } from "@/components/ui/textarea";
+import { DocumentEditor } from "@/components/document-editor/DocumentEditor";
 
 // Helper type for task completion data
 type TaskCompletionData = {
@@ -724,10 +725,12 @@ export default function TasksPage() {
               
               <div className="grid gap-2">
                 <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
+                <DocumentEditor
                   value={selectedTask.description || ""}
-                  onChange={(e) => setSelectedTask({ ...selectedTask, description: e.target.value })}
+                  onChange={(content) => setSelectedTask({ ...selectedTask, description: content })}
+                  placeholder="Add task description... Type '/' for commands"
+                  minHeight="120px"
+                  compact={true}
                 />
               </div>
               

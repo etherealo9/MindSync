@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import AssistantHelper from "@/components/ai/AssistantHelper";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DocumentEditor } from "@/components/document-editor/DocumentEditor";
 
 // Local journal entry type definition
 type JournalEntry = {
@@ -471,12 +472,12 @@ export default function JournalPage() {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <textarea
-                      className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      id="entry-content"
-                      placeholder="Detail your thoughts, experiences, or reflections here... What happened today? How did you feel about it? What did you learn?"
+                    <DocumentEditor
                       value={newEntryContent}
-                      onChange={(e) => setNewEntryContent(e.target.value)}
+                      onChange={(content) => setNewEntryContent(content)}
+                      placeholder="Detail your thoughts, experiences, or reflections here... Type '/' for commands"
+                      minHeight="150px"
+                      compact={false}
                     />
                     <p className="text-xs text-muted-foreground">Be honest and detailed - this is your personal space for reflection.</p>
                   </div>
@@ -986,13 +987,12 @@ export default function JournalPage() {
               
               <div className="grid gap-2">
                 <Label htmlFor="edit-entry-content">Journal Content</Label>
-                <textarea
-                  className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id="edit-entry-content"
+                <DocumentEditor
                   value={selectedEntry.content}
-                  onChange={(e) => setSelectedEntry({ ...selectedEntry, content: e.target.value })}
-                  aria-label="Journal entry content"
-                  placeholder="Detail your thoughts, experiences, or reflections here..."
+                  onChange={(content) => setSelectedEntry({ ...selectedEntry, content })}
+                  placeholder="Detail your thoughts, experiences, or reflections here... Type '/' for commands"
+                  minHeight="150px"
+                  compact={false}
                 />
               </div>
               

@@ -27,9 +27,16 @@
   "shortcuts": [
     {
       "name": "Dashboard",
-      "short_name": "Dashboard",
+      "short_name": "Dashboard", 
       "description": "View your dashboard",
       "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "New Reminder",
+      "short_name": "Add Reminder",
+      "description": "Create a new reminder or alarm",
+      "url": "/dashboard/reminders",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {

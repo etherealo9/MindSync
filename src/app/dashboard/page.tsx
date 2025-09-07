@@ -15,6 +15,7 @@ import { Task, JournalEntry, TasksAPI, JournalAPI } from "@/lib/supabase/databas
 import { useAuth } from "@/lib/supabase/auth-context";
 import { useAssistantStore } from "@/components/ai/AssistantBubble";
 import { AssistantStore } from '@/types/store';
+import { ReminderStatus } from "@/components/alarms/ReminderStatus";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -218,15 +219,15 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/dashboard/retrospect" className="block">
+        <Link href="/dashboard/reminders" className="block">
           <Card variant="brutal" className="h-full transition-all hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xl font-bold">Reflections</CardTitle>
-              <Icons.reflect className="h-6 w-6 text-accent" />
+              <CardTitle className="text-xl font-bold">Reminders</CardTitle>
+              <Icons.calendar className="h-6 w-6 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{loading ? "..." : Math.max(1, Math.floor(journalEntries.length / 20))}</div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Monthly retrospective</p>
+              <div className="text-3xl font-bold">⏰</div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Set alarms & reminders</p>
               <Button variant="accent" size="sm" className="mt-4 w-full">View All</Button>
             </CardContent>
           </Card>
@@ -250,9 +251,14 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Google Calendar Section */}
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1">
-        <CalendarView />
+      {/* Google Calendar and Reminders Section */}
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <CalendarView />
+        </div>
+        <div className="lg:col-span-1">
+          <ReminderStatus />
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">

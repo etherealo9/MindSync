@@ -85,14 +85,33 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   const data = event.data.json();
   
+  // Enhanced options for different notification types
   const options = {
     body: data.body || 'New notification from MindSync',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
+    vibrate: data.type === 'reminder' ? [200, 100, 200, 100, 200] : [100, 50, 100],
+    requireInteraction: data.type === 'reminder' ? true : false,
+    silent: false,
+    renotify: data.type === 'reminder' ? true : false,
+    tag: data.tag || 'general',
     data: {
-      url: data.url || '/'
-    }
+      url: data.url || '/',
+      type: data.type || 'general',
+      reminderId: data.reminderId || null
+    },
+    actions: data.type === 'reminder' ? [
+      {
+        action: 'snooze',
+        title: 'Snooze 5 min',
+        icon: '/icons/icon-72x72.png'
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss',
+        icon: '/icons/icon-72x72.png'
+      }
+    ] : []
   };
 
   event.waitUntil(
@@ -104,7 +123,58 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
+  const data = event.notification.data || {};
+  
+  // Handle reminder notification actions
+  if (data.type === 'reminder' && event.action) {
+    if (event.action === 'snooze') {
+      // Send message to client to handle snooze
+      event.waitUntil(
+        clients.matchAll().then(clientList => {
+          if (clientList.length > 0) {
+            clientList[0].postMessage({
+              type: 'snooze-reminder',
+              reminderId: data.reminderId,
+              minutes: 5
+            });
+          }
+        })
+      );
+      return;
+    } else if (event.action === 'dismiss') {
+      // Send message to client to handle dismiss
+      event.waitUntil(
+        clients.matchAll().then(clientList => {
+          if (clientList.length > 0) {
+            clientList[0].postMessage({
+              type: 'dismiss-reminder',
+              reminderId: data.reminderId
+            });
+          }
+        })
+      );
+      return;
+    }
+  }
+  
+  // Default behavior - open the app
   event.waitUntil(
-    clients.openWindow(event.notification.data.url || '/')
+    clients.openWindow(data.url || '/')
   );
+});
+
+// Handle background sync for offline reminder scheduling
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'reminder-sync') {
+    event.waitUntil(
+      // Sync reminders when connection is restored
+      clients.matchAll().then(clientList => {
+        if (clientList.length > 0) {
+          clientList[0].postMessage({
+            type: 'sync-reminders'
+          });
+        }
+      })
+    );
+  }
 }); 

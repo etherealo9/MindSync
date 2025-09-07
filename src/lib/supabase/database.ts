@@ -75,6 +75,24 @@ export type Routine = {
   updated_at: string;
 };
 
+export type Reminder = {
+  id: string;
+  user_id: string;
+  title: string;
+  message?: string;
+  due_date: string;
+  is_active: boolean;
+  snooze_until?: string;
+  repeat_pattern: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  repeat_interval: number;
+  repeat_days?: number[];
+  sound_enabled: boolean;
+  sound_tone: 'beep' | 'classic' | 'chime' | 'digital' | 'pulse';
+  vibration_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 // Tasks API
 export const TasksAPI = {
   // Get all tasks for a user
@@ -388,5 +406,154 @@ export const GoogleCalendarAPI = {
   isConnected: async (userId: string): Promise<boolean> => {
     const tokens = await GoogleCalendarAPI.getTokens(userId);
     return !!tokens;
+  }
+};
+
+// Reminders API
+export const RemindersAPI = {
+  // Get all reminders for a user
+  getReminders: async (userId: string): Promise<Reminder[]> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('user_id', userId)
+      .order('due_date', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get active reminders for a user
+  getActiveReminders: async (userId: string): Promise<Reminder[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('due_date', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      type PostgrestErrorShape = { code?: string; message?: string };
+      const e = err as PostgrestErrorShape;
+      const msg = (e && e.message) || '';
+      // 42P01: undefined_table (relation does not exist)
+      if (e?.code === '42P01' || /relation .*reminders.* does not exist/i.test(msg)) {
+        console.warn('Reminders table not found. Did you apply the reminders migration? Returning empty list.');
+        return [];
+      }
+      // Gracefully handle generic 404/Not Found responses from PostgREST
+      if (/not found/i.test(msg)) {
+        console.warn('Reminders endpoint not found. Returning empty list.');
+        return [];
+      }
+      throw err;
+    }
+  },
+
+  // Get upcoming reminders (next 24 hours)
+  getUpcomingReminders: async (userId: string): Promise<Reminder[]> => {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    const { data, error } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .gte('due_date', now.toISOString())
+      .lte('due_date', tomorrow.toISOString())
+      .order('due_date', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get a single reminder by ID
+  getReminder: async (reminderId: string): Promise<Reminder | null> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('id', reminderId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+
+  // Create a new reminder
+  createReminder: async (reminder: Omit<Reminder, 'id' | 'created_at' | 'updated_at'>): Promise<Reminder> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .insert(reminder)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Update an existing reminder
+  updateReminder: async (reminderId: string, updates: Partial<Reminder>): Promise<Reminder> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .update(updates)
+      .eq('id', reminderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Delete a reminder
+  deleteReminder: async (reminderId: string): Promise<void> => {
+    const { error } = await supabase
+      .from('reminders')
+      .delete()
+      .eq('id', reminderId);
+    
+    if (error) throw error;
+  },
+
+  // Snooze a reminder for a specific duration
+  snoozeReminder: async (reminderId: string, snoozeUntil: Date): Promise<Reminder> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .update({ snooze_until: snoozeUntil.toISOString() })
+      .eq('id', reminderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Dismiss a reminder (mark as inactive)
+  dismissReminder: async (reminderId: string): Promise<Reminder> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .update({ is_active: false })
+      .eq('id', reminderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Toggle reminder active status
+  toggleReminder: async (reminderId: string, isActive: boolean): Promise<Reminder> => {
+    const { data, error } = await supabase
+      .from('reminders')
+      .update({ is_active: isActive })
+      .eq('id', reminderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 }; 

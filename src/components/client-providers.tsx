@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { NotificationProvider } from '@/lib/notifications/notification-context';
+import { AlarmProvider } from '@/lib/alarms/alarm-context';
 
 const PageTransition = dynamic(() => import('@/components/page-transition').then(mod => mod.PageTransition), {
   ssr: false,
@@ -17,7 +19,11 @@ export const PWARegister = dynamic(() => import('@/components/pwa-register').the
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <PWAProvider>
-      <PageTransition>{children}</PageTransition>
+      <NotificationProvider>
+        <AlarmProvider>
+          <PageTransition>{children}</PageTransition>
+        </AlarmProvider>
+      </NotificationProvider>
     </PWAProvider>
   );
 } 
