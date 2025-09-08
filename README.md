@@ -1,131 +1,108 @@
-# MindSync
+MindSync 🧠
 
-MindSync is a mobile-first personal productivity web application that combines task management, journaling, and reflection capabilities with AI assistance.
+Your self-hosted, open-source productivity platform.
+MindSync is a personal productivity application designed for developers who want full control. It's built to be self-hosted, giving you ownership of your data and the flexibility to extend the platform as you see fit. No vendor lock-in, just a tool that works for you.
 
-## Features
 
-- **Task Management**: Create, organize, and prioritize tasks with due dates and categories
-- **Journaling**: Document your thoughts, experiences, and ideas with mood tracking
-- **Reflection**: Review your progress and set intentions for personal growth
-- **Notifications**: Real-time notifications for tasks, reminders, and system updates
-- **AI Assistant**: Get help with productivity tips, journaling prompts, and task organization
-- **Analytics**: Track your productivity metrics and personal growth journey
-- **Google Calendar Integration**: Sync your tasks with your Google Calendar
+-----
 
-## Tech Stack
+### Key Features
 
-- **Frontend**: Next.js, React, TypeScript, TailwindCSS, ShadcnUI
-- **Backend**: Supabase (PostgreSQL, Authentication, Storage, Real-time subscriptions)
-- **AI Integration**: OpenAI API
-- **Hosting**: Netlify
+  * **Bring Your Own Key (BYOK)**: MindSync operates on a BYOK model for all AI services. This gives you full ownership and control over your data and API usage. Supabase is configured with Row Level Security (RLS) policies to ensure user data is private and owned by the user.
+  * **Modular AI**: The AI assistant is built to be provider-agnostic. The codebase supports integrations with OpenAI, Groq, and Hugging Face, allowing for easy switching or adding new models.
+  * **Self-Hostable Backend**: The application uses Supabase, an open-source Firebase alternative, for the database (PostgreSQL), authentication, and storage.
+  * **Core Productivity Tools**: Manage tasks, write journal entries, and review your progress. The database schema includes tables for `tasks`, `journal_entries`, and `user_settings`.
+  * **Google Calendar Integration**: Sync tasks and routines with your Google Calendar.
 
-## Getting Started
+-----
 
-### Prerequisites
+### Tech Stack
 
-- Node.js (v18+)
-- npm or yarn
+  * **Frontend**: Next.js, React, TypeScript, TailwindCSS, ShadcnUI.
+  * **Backend**: Supabase (PostgreSQL, Authentication, Storage).
+  * **AI**: `@ai-sdk/groq`, `@huggingface/inference`, `openai`.
 
-### Installation
+-----
 
-1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/mindsync.git
-   cd mindsync
-   ```
+### Getting Started
 
-2. Install dependencies
-   ```
-   npm install
-   # or
-   yarn install
-   ```
+#### Prerequisites
 
-3. Set up environment variables
-   Create a `.env.local` file in the root directory and add:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   OPENAI_API_KEY=your_openai_api_key
-   ```
+  * Node.js (v18+)
+  * npm or yarn
 
-4. Set up the database schema
-   ```
-   # Install Supabase CLI
-   npm install supabase --save-dev
-   
-   # Login to Supabase CLI
-   npx supabase login
-   
-   # Link your project
-   npx supabase link --project-ref YOUR_PROJECT_REF
-   
-   # Deploy the migrations
-   npx supabase db push
-   ```
-   
-   Alternatively, see `supabase/README.md` for manual SQL execution instructions.
+#### Installation
 
-5. Run the development server
-   ```
-   npm run dev
-   # or
-   yarn dev
-   ```
+1.  Clone the repo:
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+    ```bash
+    git clone https://github.com/yourusername/mindsync.git
+    cd mindsync
+    ```
 
-## Project Structure
+2.  Install dependencies:
 
-```
-/src
-  /app                   # Next.js app router structure
-    /dashboard           # Dashboard-related pages
-      /tasks             # Task management pages
-      /journal           # Journaling pages
-      /retrospect        # Reflection pages
-      /assistant         # AI Assistant pages
-      /analytics         # Analytics pages
-      /profile           # User profile pages
-      /settings          # Settings pages
-  /components            # Reusable components
-    /layout              # Layout components (Sidebar, Header)
-    /notifications       # Notification components
-    /ui                  # UI components from ShadcnUI
-  /lib                   # Utility functions and libraries
-    /notifications       # Notification context and providers
-    /supabase            # Supabase client and database utilities
-  /styles                # Global styles
-/supabase
-  /migrations            # Database migrations
-```
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-## Deployment
+3.  Set up environment variables:
+    Create a `.env.local` file and add your keys:
 
-The application is deployed on Netlify:
+    ```
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    OPENAI_API_KEY=your_openai_api_key
+    GROQ_API_KEY=your_groq_api_key
+    HUGGINGFACE_API_KEY=your_huggingface_api_key
+    ```
 
-1. Push your changes to your repository
-2. Connect your repository to Netlify
-3. Configure the build settings:
-   - Build command: `npm run build`
-   - Publish directory: `out`
-4. Set up environment variables in Netlify dashboard
+4.  Set up the database:
 
-## Contributing
+    ```bash
+    # Install Supabase CLI
+    npm install supabase --save-dev
+    # Login to Supabase CLI
+    npx supabase login
+    # Link your project
+    npx supabase link --project-ref YOUR_PROJECT_REF
+    # Deploy the migrations
+    npx supabase db push
+    ```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+5.  Run the development server:
 
-## License
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    ```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+-----
 
-## Acknowledgments
+### Contributing
 
-- [Next.js](https://nextjs.org/) - The React Framework
-- [Shadcn UI](https://ui.shadcn.com/) - UI Components
-- [Supabase](https://supabase.io/) - Open source Firebase alternative
-- [OpenAI](https://openai.com/) - AI models and APIs
+We welcome all contributions. Our primary focus is on expanding features and improving performance for developers and power users.
+
+#### Roadmap:
+
+  * **Multi-user Support**: Implement collaborative features like shared task lists and projects.
+  * **Advanced Project Management**: Build new views such as Kanban boards and mind maps.
+  * **Authentication**: Add support for more authentication providers like Firebase.
+  * **AI Integrations**: Integrate new AI models to expand the assistant's capabilities.
+
+#### How to Contribute:
+
+1.  Fork the repository.
+2.  Create your feature branch (`git checkout -b feature/your-feature-name`).
+3.  Commit your changes (`git commit -m 'feat: add new feature'`).
+4.  Push to the branch (`git push origin feature/your-feature-name`).
+5.  Open a Pull Request.
+
+-----
+
+### License
+
+This project is licensed under the MIT License.
