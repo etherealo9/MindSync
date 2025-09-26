@@ -8,7 +8,7 @@ MindSync is a personal productivity application designed for developers who want
 
 ### Key Features
 
-  * **Bring Your Own Key (BYOK)**: MindSync operates on a BYOK model for all AI services. This gives you full ownership and control over your data and API usage. Supabase is configured with Row Level Security (RLS) policies to ensure user data is private and owned by the user.
+  * **Bring Your Own Key (BYOK)**: MindSync operates on a BYOK model for all AI services and your storage so your thoughts are "YOURS". This gives you full ownership and control over your data and API. Supabase is configured with Row Level Security (RLS) policies to ensure your data is private.
   * **Modular AI**: The AI assistant is built to be provider-agnostic. The codebase supports integrations with OpenAI, Groq, and Hugging Face, allowing for easy switching or adding new models.
   * **Self-Hostable Backend**: The application uses Supabase, an open-source Firebase alternative, for the database (PostgreSQL), authentication, and storage.
   * **Core Productivity Tools**: Manage tasks, write journal entries, and review your progress. The database schema includes tables for `tasks`, `journal_entries`, and `user_settings`.
